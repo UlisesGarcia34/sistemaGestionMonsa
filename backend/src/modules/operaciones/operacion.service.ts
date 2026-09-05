@@ -1,4 +1,5 @@
 import { prisma } from "@/config/prisma";
+import { accionesShipment, calculosOperativos, hoyOperativo } from '@/modules/shipments/shipment.politicas';
 import { SELECT_USUARIO_PUBLICO } from "@/modules/usuarios/usuario.service";
 
 // Modulo Operaciones: tablero de seguimiento de los embarques vivos. Es de
@@ -12,21 +13,11 @@ import { SELECT_USUARIO_PUBLICO } from "@/modules/usuarios/usuario.service";
 // ellos ya paso a finanzas y no se le hace tracking.
 const ACTIVOS = ["NUEVO_EMBARQUE", "BOOKING_CONFIRMED", "PARA_CERRAR", "PARA_FACTURAR"] as const;
 
-// Ventana del aviso de llegada: el equipo avisa al cliente ~10 dias antes del
-// arribo. No hay campo que persista "aviso enviado" en el schema vigente, asi
-// que la alerta se deriva: ETA dentro de la ventana y sin arribo real todavia.
-const DIAS_AVISO_LLEGADA = 10;
-
-const DIA_MS = 86_400_000;
-
-function diffDias(desde: Date, hasta: Date) {
-  return Math.floor((hasta.getTime() - desde.getTime()) / DIA_MS);
-}
-
 const INCLUDE = {
   consignee: { select: { id: true, razonSocial: true, contactoEmail: true } },
   customerService: { select: SELECT_USUARIO_PUBLICO },
   contenedores: true,
+  facturas: { select: { tipo: true } },
   booking: { include: { proveedor: { select: { id: true, nombre: true } } } },
   notificaciones: {
     include: { enviadoPor: { select: SELECT_USUARIO_PUBLICO } },
@@ -35,7 +26,7 @@ const INCLUDE = {
 };
 
 export async function tablero(params: { status?: string; customerServiceId?: string } = {}) {
-  const hoy = new Date();
+  const hoy = hoyOperativo();
 
   const shipments = await prisma.shipment.findMany({
     where: {
@@ -51,25 +42,10 @@ export async function tablero(params: { status?: string; customerServiceId?: str
     const arriboReal = s.fechaArriboReal ?? null;
     const liberacion = s.fechaLiberacion ?? null;
 
-    // Dias en puerto: desde el arribo real hasta la liberacion (o hasta hoy si
-    // sigue sin liberarse). Sin arribo real todavia no aplica.
-    const diasEnPuerto = arriboReal ? diffDias(arriboReal, liberacion ?? hoy) : null;
-
-    // Dias para el ETA: negativo = el ETA ya paso.
-    const diasParaEta = eta ? diffDias(hoy, eta) : null;
-
-    const atrasado = eta != null && !arriboReal && eta < hoy;
-    const yaAvisoArribo = s.notificaciones.some((n) => n.tipo === "AVISO_ARRIBO");
-    const avisoLlegadaPendiente =
-      eta != null &&
-      !arriboReal &&
-      !yaAvisoArribo &&
-      diasParaEta != null &&
-      diasParaEta >= 0 &&
-      diasParaEta <= DIAS_AVISO_LLEGADA;
-
     return {
       id: s.id,
+      version: s.version,
+      acciones: accionesShipment(s),
       folio: s.folio,
       status: s.status,
       tipoOperacion: s.tipoOperacion,
@@ -93,10 +69,7 @@ export async function tablero(params: { status?: string; customerServiceId?: str
       contenedores: s.contenedores,
       notificaciones: s.notificaciones,
       // Calculados (no persistidos):
-      diasEnPuerto,
-      diasParaEta,
-      atrasado,
-      avisoLlegadaPendiente,
+      ...calculosOperativos(s, hoy),
     };
   });
 }
