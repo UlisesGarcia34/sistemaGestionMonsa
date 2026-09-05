@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+import { transaccion } from '@/shared/transaccion';
 import { prisma } from "@/config/prisma";
 import { ReglaDeNegocioError } from "@/shared/middleware/errorHandler";
 import { crearDesdeFactura } from "@/modules/cuentas-por-cobrar/cxc.service";
@@ -12,8 +14,8 @@ import {
 // tolerar huecos -- el seed carga los numeros de factura reales del Excel
 // (MGC-FACT-000002, 000003, 000005). La proforma usa su propia serie
 // (MGC-PROF-) para no consumir folios de la serie fiscal.
-async function siguienteNumero(prefijo: string) {
-  const ultima = await prisma.factura.findFirst({
+async function siguienteNumero(prefijo: string, db: Prisma.TransactionClient = prisma) {
+  const ultima = await db.factura.findFirst({
     where: { numeroFactura: { startsWith: prefijo } },
     orderBy: { numeroFactura: "desc" },
     select: { numeroFactura: true },
@@ -49,7 +51,8 @@ const INCLUDE_FACTURA = {
 // marcarTimbrada. Nace con UN concepto automatico calcado del monto capturado;
 // el contador lo puede editar mientras siga BORRADOR.
 export async function crearFactura(data: CrearFacturaInput) {
-  const shipment = await prisma.shipment.findUnique({
+  return transaccion(async tx => {
+  const shipment = await tx.shipment.findUnique({
     where: { id: data.shipmentId },
     include: { facturas: true, consignee: true },
   });
@@ -82,11 +85,11 @@ export async function crearFactura(data: CrearFacturaInput) {
     );
   }
 
-  const numeroFactura = await siguienteNumero(data.tipo === "PROFORMA" ? "MGC-PROF-" : "MGC-FACT-");
+  const numeroFactura = await siguienteNumero(data.tipo === "PROFORMA" ? "MGC-PROF-" : "MGC-FACT-", tx);
   const ivaImporte = data.montoSinIva * 0.16;
   const cliente = shipment.consignee;
 
-  return prisma.factura.create({
+  return tx.factura.create({
     data: {
       shipmentId: data.shipmentId,
       tipo: data.tipo,
@@ -120,6 +123,7 @@ export async function crearFactura(data: CrearFacturaInput) {
       },
     },
     include: INCLUDE_FACTURA,
+  });
   });
 }
 
