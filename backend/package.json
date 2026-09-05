@@ -4,6 +4,8 @@
   "description": "API del sistema de gestion de Monsa Global Cargo (MGC)",
   "main": "dist/server.js",
   "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
+    "test:integration": "node tests/run-integration.cjs",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
