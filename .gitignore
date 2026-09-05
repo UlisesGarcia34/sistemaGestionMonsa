@@ -20,3 +20,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Renders temporales del PDF
+tmp/pdfs/guia-*.png
