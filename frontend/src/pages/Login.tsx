@@ -49,16 +49,17 @@ export default function Login() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#F4F6FB] px-4 py-10 dark:bg-slate-950">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[#F4F6FB] p-3 sm:p-5 dark:bg-slate-950">
       {/* Fondo de puntos: la textura discreta del patron de referencia. */}
       <div
         className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,rgba(11,61,92,0.10)_1px,transparent_1px)] [background-size:22px_22px] dark:[background-image:radial-gradient(circle,rgba(148,163,184,0.08)_1px,transparent_1px)]"
         aria-hidden
       />
 
-      {/* Una sola tarjeta unificada: las dos mitades comparten borde y sombra,
-          sin separacion visible entre el panel de marca y el formulario. */}
-      <div className="relative z-10 grid w-full max-w-5xl items-stretch overflow-hidden rounded-3xl shadow-panel lg:grid-cols-2">
+      {/* Una sola tarjeta unificada, a pantalla completa: las dos mitades
+          comparten borde y sombra, sin separacion visible entre el panel de
+          marca y el formulario. */}
+      <div className="relative z-10 grid min-h-0 flex-1 items-stretch overflow-hidden rounded-3xl shadow-panel lg:grid-cols-2">
         {/* Panel de marca. Se oculta en pantallas chicas para dejar la tarjeta
             del formulario a ancho completo. */}
         <div className="relative hidden bg-navy text-white lg:flex lg:flex-col">
@@ -66,10 +67,11 @@ export default function Login() {
             src={puertoNavy}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
+            className="absolute inset-0 h-full w-full object-cover opacity-55"
           />
+          <div className="absolute inset-0 bg-navy-950/55" aria-hidden />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/60 to-navy-900/35"
+            className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/70 to-navy-950/55"
             aria-hidden
           />
 
@@ -210,7 +212,7 @@ export default function Login() {
         </div>
       </div>
 
-      <p className="relative z-10 mt-6 text-center text-xs text-slate-400 dark:text-slate-600">
+      <p className="relative z-10 shrink-0 pt-2.5 text-center text-xs text-slate-400 dark:text-slate-600">
         © {new Date().getFullYear()} Monsa Global Cargo. Sistema interno de gestion.
       </p>
     </div>
