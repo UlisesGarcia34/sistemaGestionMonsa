@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
+  Ban,
   Calculator,
   FileText,
   Lock,
@@ -12,6 +13,9 @@ import {
 } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from '@/lib/auth';
+import { FiltrosEmbarques, useFiltrosEmbarques } from '@/components/FiltrosEmbarques';
+import { ResumenEmbarques } from '@/components/ResumenEmbarques';
 import { Aviso } from "@/components/Aviso";
 import { Button } from "@/components/Button";
 import { CascadeStepper } from "@/components/CascadeStepper";
@@ -30,6 +34,7 @@ import { etiqueta, fecha, fechaInput, numeroInput, texto } from "@/lib/format";
 
 interface Booking {
   id: string;
+  shipment?: { id: string } | null;
   referencia?: string | null;
   cotizacion: { modalidad: string; cliente: { id: string; razonSocial: string } };
   proveedor: { nombre: string };
@@ -59,6 +64,11 @@ interface NotificacionEnviada {
 }
 
 interface Shipment {
+  version: number;
+  acciones: { editar: string | null; cerrar: string | null; cancelar: string | null };
+  motivoCancelacion?: string | null;
+  canceladoEn?: string | null;
+  auditoria?: { id: string; accion: string; autorNombre: string; creadoEn: string; antes: Record<string, unknown> | null; despues: Record<string, unknown> }[];
   id: string;
   folio: string;
   status: string;
@@ -130,8 +140,7 @@ const TIPOS_NOTIFICACION = [
 // Estados en los que el expediente sigue vivo. Fuera de ellos el embarque ya
 // sostiene una factura y su cuenta por cobrar: el backend aplica la misma
 // regla en shipment.service.actualizarShipment.
-const EDITABLES = ["NUEVO_EMBARQUE", "BOOKING_CONFIRMED", "PARA_CERRAR", "PARA_FACTURAR"];
-const ABIERTOS = ["NUEVO_EMBARQUE", "BOOKING_CONFIRMED", "PARA_CERRAR"];
+
 
 // Mismos gates que reporte.service, adelantados al cliente para poder mostrar
 // el motivo en el tooltip del boton deshabilitado en vez de esconder la accion.
@@ -143,17 +152,14 @@ const bloqueoConocimiento = (s: Shipment, tipo: "HBL" | "MBL") =>
     ? null
     : `Falta capturar el numero de ${tipo}. Registralo con "Documentacion" en esta misma fila.`;
 
-function Dato({ label, valor }: { label: string; valor: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</dt>
-      <dd className="text-sm text-slate-700 dark:text-slate-300">{valor}</dd>
-    </div>
-  );
-}
-
 export default function Embarques() {
   const qc = useQueryClient();
+  const { usuario } = useAuth();
+  const { params, setParams, filtros } = useFiltrosEmbarques();
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const [cancelar, setCancelar] = useState<Shipment | null>(null);
+  const [motivo, setMotivo] = useState('');
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const navigate = useNavigate();
   const [mostrarForm, setMostrarForm] = useState(false);
   const [bookingId, setBookingId] = useState("");
@@ -172,10 +178,17 @@ export default function Embarques() {
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [avisoCierre, setAvisoCierre] = useState<string | null>(null);
 
-  const { data: shipments, isLoading } = useQuery({
-    queryKey: ["shipments"],
-    queryFn: async () => (await api.get<Shipment[]>("/shipments")).data,
+  const { data: pagina, isLoading, error: errorLista, refetch } = useQuery({
+    queryKey: ['shipments', 'pagina', filtros, page],
+    queryFn: async () => (await api.get<{ items: Shipment[]; total: number; pages: number }>('/shipments/pagina', { params: { ...filtros, page, pageSize: 20 } })).data,
   });
+  const shipments = pagina?.items;
+  async function detalle(s: Shipment, abrir: (s: Shipment) => void) {
+    setCargandoDetalle(true); setErrorAccion(null); setErrorEdicion(null);
+    try { abrir((await api.get<Shipment>(`/shipments/${s.id}`)).data); }
+    catch (e) { setErrorAccion(mensajeError(e, 'No se pudo abrir el expediente')); }
+    finally { setCargandoDetalle(false); }
+  }
   const { data: bookingsConfirmados } = useQuery({
     queryKey: ["bookings", "CONFIRMADO"],
     queryFn: async () => (await api.get<Booking[]>("/bookings?status=CONFIRMADO")).data,
@@ -189,10 +202,13 @@ export default function Embarques() {
     queryFn: async () => (await api.get<Usuario[]>("/usuarios")).data,
   });
 
-  const sinBookings = bookingsConfirmados != null && bookingsConfirmados.length === 0;
+  const bookingsDisponibles = bookingsConfirmados?.filter(b => !b.shipment);
+  const sinBookings = bookingsDisponibles != null && bookingsDisponibles.length === 0;
 
   const refrescar = () => {
     qc.invalidateQueries({ queryKey: ["shipments"] });
+    qc.invalidateQueries({ queryKey: ['operaciones'] });
+    qc.invalidateQueries({ queryKey: ['bookings'] });
     qc.invalidateQueries({ queryKey: ["reportes"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
@@ -217,11 +233,11 @@ export default function Embarques() {
   });
 
   const cerrar = useMutation({
-    mutationFn: async (id: string) =>
+    mutationFn: async (s: Shipment) =>
       (
         await api.patch<{
           divergenciaMargen?: { alerta?: boolean; delta?: number | null; moneda?: string };
-        }>(`/shipments/${id}/cerrar`)
+        }>(`/shipments/${s.id}/cerrar`, { version: s.version })
       ).data,
     onSuccess: (data) => {
       setErrorAccion(null);
@@ -240,7 +256,7 @@ export default function Embarques() {
 
   const guardarValorizacion = useMutation({
     mutationFn: async (payload: { valorizacionVenta: number; valorizacionCompra: number }) =>
-      api.patch(`/shipments/${valorizar!.id}/valorizacion`, payload),
+      api.patch(`/shipments/${valorizar!.id}/valorizacion`, { ...payload, version: valorizar!.version }),
     onSuccess: () => {
       setValorizar(null);
       setErrorAccion(null);
@@ -262,7 +278,7 @@ export default function Embarques() {
 
   const guardar = useMutation({
     mutationFn: async (payload: Record<string, unknown>) =>
-      api.patch(`/shipments/${editar!.id}`, payload),
+      api.patch(`/shipments/${editar!.id}`, { ...payload, version: editar!.version }),
     onSuccess: () => {
       setEditar(null);
       setErrorEdicion(null);
@@ -273,7 +289,7 @@ export default function Embarques() {
 
   const guardarDocumento = useMutation({
     mutationFn: async (payload: Record<string, unknown>) =>
-      api.patch(`/shipments/${documentar!.id}/documento`, payload),
+      api.patch(`/shipments/${documentar!.id}/documento`, { ...payload, version: documentar!.version }),
     onSuccess: () => {
       setDocumentar(null);
       setErrorEdicion(null);
@@ -282,6 +298,11 @@ export default function Embarques() {
     onError: (e) => setErrorEdicion(mensajeError(e, "No se pudo guardar la documentacion")),
   });
 
+  const confirmarCancelacion = useMutation({
+    mutationFn: () => api.patch(`/shipments/${cancelar!.id}/cancelar`, { version: cancelar!.version, motivo }),
+    onSuccess: () => { setCancelar(null); setMotivo(''); setErrorAccion(null); refrescar(); },
+    onError: e => setErrorAccion(mensajeError(e, 'No se pudo cancelar el embarque')),
+  });
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!bookingId || !shipperNombre) return;
@@ -365,6 +386,8 @@ export default function Embarques() {
   ];
 
   const gruposDetalle = (s: Shipment): GrupoDetalle[] => [
+    ...(s.motivoCancelacion ? [{ titulo: 'Cancelación', campos: [{ label: 'Motivo', valor: s.motivoCancelacion, ancho: true }, { label: 'Fecha', valor: fecha(s.canceladoEn) }] }] : []),
+    { titulo: 'Historial del expediente (últimos 50 cambios)', campos: [{ label: 'Cambios registrados', ancho: true, valor: s.auditoria?.length ? <ul className="space-y-3">{s.auditoria.map(a => <li key={a.id} className="text-xs"><strong>{etiqueta(a.accion)}</strong> · {a.autorNombre} · {new Date(a.creadoEn).toLocaleString('es-MX')}<details><summary className="cursor-pointer text-teal-700 dark:text-teal-300">Ver cambio</summary><dl className="mt-2 space-y-1">{Object.entries(a.despues).filter(([campo]) => !['id', 'bookingId', 'consigneeId', 'customerServiceId', 'canceladoPorId'].includes(campo)).map(([campo, valor]) => <div key={campo}><dt className="font-medium">{etiqueta(campo.replace(/([A-Z])/g, ' $1'))}</dt><dd className="break-words">{a.antes ? `${a.antes[campo] == null ? 'Sin dato' : String(a.antes[campo])} → ` : ''}{valor == null ? 'Sin dato' : String(valor)}</dd></div>)}</dl></details></li>)}</ul> : 'Sin cambios registrados' }] },
     {
       titulo: "Embarque",
       campos: [
@@ -513,7 +536,7 @@ export default function Embarques() {
             icono={Plus}
             onClick={() => setMostrarForm(true)}
             disabled={sinBookings}
-            motivoDeshabilitado="No hay bookings CONFIRMADOS. Confirma un booking antes de abrir el embarque."
+            motivoDeshabilitado="No hay bookings confirmados sin embarque asociado."
           >
             Nuevo embarque
           </Button>
@@ -527,35 +550,39 @@ export default function Embarques() {
 
       {sinBookings && (
         <Aviso tono="bloqueo">
-          No hay bookings CONFIRMADOS. Confirma un booking antes de abrir el embarque.
+          No hay bookings confirmados sin embarque asociado. Confirma una nueva reserva para abrir otro embarque.
         </Aviso>
       )}
       {errorAccion && <Aviso tono="error">{errorAccion}</Aviso>}
       {avisoCierre && <Aviso tono="bloqueo">{avisoCierre}</Aviso>}
 
+      <FiltrosEmbarques />
+      <ResumenEmbarques filtros={filtros} />
+      {errorLista && <Aviso tono="error">{mensajeError(errorLista, 'No se pudo cargar la lista.')} <Button variante="secondary" onClick={() => refetch()}>Reintentar</Button></Aviso>}
+      {cargandoDetalle && <p role="status" className="text-sm text-slate-500 dark:text-slate-400">Abriendo expediente…</p>}
       <DataTable<Shipment>
         keyExtractor={(s) => s.id}
         filas={shipments}
         cargando={isLoading}
-        vacioMensaje="Sin embarques todavia"
-        onVer={setVer}
+        vacioMensaje="Sin embarques con estos filtros"
+        onVer={s => detalle(s, setVer)}
         onEditar={(s) => {
           setErrorEdicion(null);
-          setEditar(s);
+          detalle(s, setEditar);
         }}
-        edicionBloqueada={(s) =>
-          EDITABLES.includes(s.status)
-            ? null
-            : `Un embarque ${s.status} ya sostiene una factura y su cuenta por cobrar: no se edita.`
-        }
+        edicionBloqueada={s => s.acciones.editar}
         accionesExtra={[
+          { clave: 'cancelar', label: 'Cancelar embarque', icono: Ban, tono: 'peligro',
+            deshabilitada: s => usuario?.rol !== 'ADMIN' ? 'Tu rol no tiene permiso para esta operacion' : s.acciones.cancelar,
+            onClick: s => { setMotivo(''); setErrorAccion(null); setCancelar(s); } },
           {
             clave: "documentacion",
             label: "Capturar documentacion (MBL / HBL)",
             icono: FileText,
+            deshabilitada: s => s.acciones.editar,
             onClick: (s) => {
               setErrorEdicion(null);
-              setDocumentar(s);
+              detalle(s, setDocumentar);
             },
           },
           {
@@ -564,7 +591,7 @@ export default function Embarques() {
             icono: Bell,
             onClick: (s) => {
               setErrorAccion(null);
-              setNotificar(s);
+              detalle(s, setNotificar);
             },
           },
           {
@@ -572,10 +599,10 @@ export default function Embarques() {
             label: "Confirmar valorizacion (costo y venta reales)",
             icono: Calculator,
             tono: "acento",
-            oculta: (s) => !EDITABLES.includes(s.status),
+            deshabilitada: s => !['ADMIN', 'VENTAS'].includes(usuario?.rol ?? '') ? 'Tu rol no tiene permiso para esta operacion' : s.acciones.editar,
             onClick: (s) => {
               setErrorAccion(null);
-              setValorizar(s);
+              detalle(s, setValorizar);
             },
           },
           {
@@ -591,96 +618,23 @@ export default function Embarques() {
             label: "Enviar carta de instrucciones por correo",
             icono: Send,
             deshabilitada: bloqueoCarta,
-            onClick: setEnviarCarta,
+            onClick: s => detalle(s, setEnviarCarta),
           },
           {
             clave: "cerrar",
             label: "Cerrar embarque (pasa a PARA_FACTURAR)",
             icono: Lock,
-            oculta: (s) => !ABIERTOS.includes(s.status),
-            onClick: (s) => cerrar.mutate(s.id),
+            deshabilitada: s => cerrar.isPending ? 'Cerrando embarque…' : s.acciones.cerrar,
+            onClick: (s) => cerrar.mutate(s),
           },
         ]}
-        renderDetalle={(s) => (
-          <div className="space-y-4">
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
-              <Dato label="Tipo operacion" valor={etiqueta(s.tipoOperacion)} />
-              <Dato label="Incoterm" valor={texto(s.incoterm)} />
-              <Dato label="Shipper" valor={texto(s.shipperNombre)} />
-              <Dato label="Customer service" valor={texto(s.customerService?.nombre)} />
-              <Dato
-                label="Vessel / Voyage"
-                valor={texto([s.vessel, s.voyage].filter(Boolean).join(" / "))}
-              />
-              <Dato
-                label="Origen"
-                valor={texto([s.puertoOrigen, s.paisOrigen].filter(Boolean).join(", "))}
-              />
-              <Dato label="Destino" valor={texto(s.puertoDestino || s.destinoFinal)} />
-              <Dato label="ETD" valor={fecha(s.etd)} />
-              <Dato label="ETA" valor={fecha(s.eta)} />
-              <Dato label="MBL" valor={texto(s.documento?.mbl)} />
-              <Dato label="HBL" valor={texto(s.documento?.hbl)} />
-              <Dato label="PO cliente" valor={texto(s.poCliente)} />
-              <Dato
-                label="Peso bruto"
-                valor={s.grossWeight ? `${Number(s.grossWeight).toLocaleString("es-MX")} kg` : "—"}
-              />
-              <Dato label="CBM" valor={texto(s.cbm ? String(s.cbm) : null)} />
-              <Dato label="Total items" valor={s.totalItems != null ? String(s.totalItems) : "—"} />
-              <Dato
-                label="Contenedores"
-                valor={
-                  s.contenedores?.length
-                    ? s.contenedores
-                        .map((c) => [c.numero, c.tipo].filter(Boolean).join(" "))
-                        .join(", ")
-                    : "—"
-                }
-              />
-            </dl>
-
-            {/* Documentos de transporte: se muestran siempre, deshabilitados
-                con su motivo cuando el numero todavia no esta capturado. */}
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-              <span className="text-etiqueta font-semibold uppercase text-slate-500">
-                Documentos
-              </span>
-              {(["HBL", "MBL"] as const).map((tipo) => (
-                <Button
-                  key={tipo}
-                  variante="secondary"
-                  tamano="sm"
-                  icono={Printer}
-                  disabled={!!bloqueoConocimiento(s, tipo)}
-                  motivoDeshabilitado={bloqueoConocimiento(s, tipo)}
-                  onClick={() => navigate(rutaVistaDocumento("shipment", s.id, tipo))}
-                >
-                  Imprimir {tipo}
-                </Button>
-              ))}
-              <Button
-                variante="secondary"
-                tamano="sm"
-                icono={ScrollText}
-                disabled={!!bloqueoCarta(s)}
-                motivoDeshabilitado={bloqueoCarta(s)}
-                onClick={() =>
-                  abrirPdf(rutaPdfDocumento("shipment", s.id, "CARTA_INSTRUCCIONES"))
-                }
-              >
-                Carta de instrucciones (PDF)
-              </Button>
-            </div>
-          </div>
-        )}
         columnas={[
           {
             header: "Folio",
             render: (s) => <span className="font-medium text-slate-900 dark:text-slate-100">{s.folio}</span>,
           },
           { header: "Consignee", render: (s) => s.consignee?.razonSocial },
-          { header: "Proveedor", render: (s) => s.booking?.proveedor?.nombre },
+          { header: "Responsable", render: (s) => s.customerService?.nombre ?? "Sin asignar" },
           { header: "Modalidad", render: (s) => s.modalidad },
           {
             header: "Material",
@@ -691,6 +645,18 @@ export default function Embarques() {
         ]}
       />
 
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500 dark:text-slate-400">
+        <span>{pagina?.total ?? 0} embarques · Página {page} de {Math.max(pagina?.pages ?? 0, 1)}</span>
+        <div className="flex gap-2">{[{ texto: 'Anterior', n: page - 1, disabled: page <= 1 }, { texto: 'Siguiente', n: page + 1, disabled: page >= (pagina?.pages ?? 0) }].map(b => <Button key={b.texto} variante="secondary" disabled={b.disabled || isLoading} onClick={() => { const p = new URLSearchParams(params); p.set('page', String(b.n)); setParams(p); }}>{b.texto}</Button>)}</div>
+      </div>
+      {cancelar && <Modal titulo={`Cancelar ${cancelar.folio}`} onClose={() => !confirmarCancelacion.isPending && setCancelar(null)}>
+        <form className="space-y-4" onSubmit={e => { e.preventDefault(); confirmarCancelacion.mutate(); }}>
+          <p className="text-sm text-slate-600 dark:text-slate-300">El embarque conservará su expediente e historial. La cancelación no se puede deshacer desde esta pantalla.</p>
+          <Field label="Motivo de cancelación" requerido><TextInput autoFocus value={motivo} onChange={e => setMotivo(e.target.value)} minLength={5} maxLength={2000} required /></Field>
+          {errorAccion && <Aviso tono="error">{errorAccion}</Aviso>}
+          <div className="flex justify-end gap-2"><Button variante="secondary" disabled={confirmarCancelacion.isPending} onClick={() => setCancelar(null)}>Volver</Button><Button type="submit" icono={Ban} disabled={confirmarCancelacion.isPending || motivo.trim().length < 5}>{confirmarCancelacion.isPending ? 'Cancelando…' : 'Confirmar cancelación'}</Button></div>
+        </form>
+      </Modal>}
       {ver && (
         <DetalleDrawer
           titulo={ver.folio}
@@ -715,9 +681,10 @@ export default function Embarques() {
               >
                 Carta de instrucciones
               </Button>
-              {EDITABLES.includes(ver.status) && (
                 <Button
                   variante="secondary"
+                  disabled={!!ver.acciones.editar}
+                  motivoDeshabilitado={ver.acciones.editar}
                   onClick={() => {
                     setEditar(ver);
                     setVer(null);
@@ -725,7 +692,6 @@ export default function Embarques() {
                 >
                   Editar
                 </Button>
-              )}
             </>
           }
         />
@@ -794,6 +760,7 @@ export default function Embarques() {
 
       {valorizar && (
         <ValorizacionModal
+          error={errorAccion}
           shipment={valorizar}
           guardando={guardarValorizacion.isPending}
           onClose={() => setValorizar(null)}
@@ -841,7 +808,7 @@ export default function Embarques() {
             <Field label="Booking confirmado" requerido>
               <Select value={bookingId} onChange={(e) => setBookingId(e.target.value)} required>
                 <option value="">Selecciona un booking</option>
-                {bookingsConfirmados?.map((b) => (
+                {bookingsDisponibles?.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.cotizacion.cliente.razonSocial} — {b.proveedor.nombre}
                   </option>
@@ -895,6 +862,7 @@ export default function Embarques() {
 function ValorizacionModal({
   shipment,
   guardando,
+  error,
   onClose,
   onConfirmar,
 }: {
@@ -902,6 +870,7 @@ function ValorizacionModal({
   guardando: boolean;
   onClose: () => void;
   onConfirmar: (p: { valorizacionVenta: number; valorizacionCompra: number }) => void;
+  error?: string | null;
 }) {
   const est = shipment.booking?.cotizacion;
   const [venta, setVenta] = useState(numeroInput(shipment.valorizacionVenta ?? est?.montoVenta));
@@ -920,6 +889,7 @@ function ValorizacionModal({
         }}
         className="space-y-3"
       >
+        {error && <Aviso tono="error">{error}</Aviso>}
         {est && (
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             Estimado en la cotizacion: venta {texto(est.montoVenta ? String(est.montoVenta) : null)} ·
