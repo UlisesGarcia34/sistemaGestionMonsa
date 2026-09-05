@@ -89,7 +89,7 @@ export function CancelarCfdiModal({
           </Field>
         )}
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Volver
           </Button>

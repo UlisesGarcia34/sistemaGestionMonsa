@@ -24,22 +24,22 @@ export function Card({
 }: CardProps) {
   return (
     <section
-      className={`overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta ${className}`}
+      className={`overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta dark:border-slate-800 dark:bg-slate-900 ${className}`}
     >
       {(titulo || acciones) && (
-        <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
+        <header className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
           <div className="flex min-w-0 items-center gap-2.5">
             {Icono && (
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-navy-600">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-navy-50 text-navy-600 dark:bg-navy-900/40 dark:text-navy-300">
                 <Icono size={15} strokeWidth={2} aria-hidden />
               </span>
             )}
             <div className="min-w-0">
               {titulo && (
-                <h2 className="truncate text-sm font-semibold text-slate-800">{titulo}</h2>
+                <h2 className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{titulo}</h2>
               )}
               {descripcion && (
-                <p className="mt-0.5 truncate text-xs text-slate-500">{descripcion}</p>
+                <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{descripcion}</p>
               )}
             </div>
           </div>

@@ -36,7 +36,7 @@ export function CascadeStepper({ actual, nota }: CascadeStepperProps) {
   const idxActual = PASOS_CASCADA.findIndex((p) => p.clave === actual);
 
   return (
-    <div className="no-imprimir overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta">
+    <div className="no-imprimir overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta dark:border-slate-800 dark:bg-slate-900">
       <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 px-4 py-3 text-xs font-medium">
         {PASOS_CASCADA.map((paso, i) => {
           const completado = i < idxActual;
@@ -50,8 +50,8 @@ export function CascadeStepper({ actual, nota }: CascadeStepperProps) {
                   esActual
                     ? "bg-navy text-white shadow-tarjeta"
                     : completado
-                      ? "bg-teal-50 text-teal-700 hover:bg-teal-100"
-                      : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600"
+                      ? "bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-teal-900/60"
+                      : "bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300"
                 }`}
               >
                 <span
@@ -60,7 +60,7 @@ export function CascadeStepper({ actual, nota }: CascadeStepperProps) {
                       ? "bg-white/20 text-white"
                       : completado
                         ? "bg-teal-500 text-white"
-                        : "bg-white text-slate-400"
+                        : "bg-white text-slate-400 dark:bg-slate-700 dark:text-slate-400"
                   }`}
                 >
                   {completado ? (
@@ -73,7 +73,7 @@ export function CascadeStepper({ actual, nota }: CascadeStepperProps) {
               </Link>
               {i < PASOS_CASCADA.length - 1 && (
                 <span
-                  className={`h-px w-4 ${completado ? "bg-teal-300" : "bg-slate-200"}`}
+                  className={`h-px w-4 ${completado ? "bg-teal-300 dark:bg-teal-700" : "bg-slate-200 dark:bg-slate-700"}`}
                   aria-hidden
                 />
               )}
@@ -82,8 +82,8 @@ export function CascadeStepper({ actual, nota }: CascadeStepperProps) {
         })}
       </ol>
       {nota && (
-        <p className="flex items-start gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs leading-relaxed text-slate-600">
-          <Info size={13} strokeWidth={2} className="mt-0.5 shrink-0 text-teal-600" aria-hidden />
+        <p className="flex items-start gap-2 border-t border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs leading-relaxed text-slate-600 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
+          <Info size={13} strokeWidth={2} className="mt-0.5 shrink-0 text-teal-600 dark:text-teal-400" aria-hidden />
           {nota}
         </p>
       )}

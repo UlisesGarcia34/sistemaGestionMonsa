@@ -34,21 +34,21 @@ export function Modal({
       aria-modal="true"
     >
       <div
-        className={`w-full ${maxWidth} rounded-xl border border-slate-200 bg-white shadow-panel`}
+        className={`w-full ${maxWidth} rounded-xl border border-slate-200 bg-white shadow-panel dark:border-slate-800 dark:bg-slate-900`}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <div className="min-w-0">
-            <h2 className="text-base font-semibold text-slate-900">{titulo}</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{titulo}</h2>
             {descripcion && (
-              <p className="mt-1 text-xs leading-relaxed text-slate-500">{descripcion}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{descripcion}</p>
             )}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
             <X size={15} strokeWidth={2} aria-hidden />
           </button>

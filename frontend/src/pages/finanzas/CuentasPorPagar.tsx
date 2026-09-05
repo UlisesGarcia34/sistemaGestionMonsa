@@ -225,7 +225,7 @@ export default function CuentasPorPagar() {
             header: "Proveedor",
             render: (c) => (
               <div className="min-w-0">
-                <p className="font-medium text-slate-900">{c.proveedor?.nombre}</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100">{c.proveedor?.nombre}</p>
                 <p className="text-xs text-slate-400">{etiqueta(c.proveedor?.tipo)}</p>
               </div>
             ),
@@ -237,7 +237,7 @@ export default function CuentasPorPagar() {
             header: "Limite pago",
             alinear: "der",
             render: (c) => (
-              <span className={estaVencida(c) ? "font-semibold text-rose-600" : "text-slate-600"}>
+              <span className={estaVencida(c) ? "font-semibold text-rose-600" : "text-slate-600 dark:text-slate-300"}>
                 {fecha(c.fechaLimitePago)}
               </span>
             ),

@@ -29,15 +29,15 @@ export function PageHeader({
         )}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight text-slate-900">{titulo}</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">{titulo}</h1>
             {distintivo && (
-              <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-700">
+              <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-teal-700 dark:bg-teal-900/40 dark:text-teal-300">
                 {distintivo}
               </span>
             )}
           </div>
           {descripcion && (
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">{descripcion}</p>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500 dark:text-slate-400">{descripcion}</p>
           )}
         </div>
       </div>

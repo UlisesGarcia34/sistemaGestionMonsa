@@ -134,7 +134,7 @@ export default function Reportes() {
               return (
                 <span className="flex items-center gap-2">
                   <Icono size={15} strokeWidth={1.9} className="shrink-0 text-slate-400" />
-                  <span className="font-medium text-slate-900">{d.titulo}</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{d.titulo}</span>
                 </span>
               );
             },

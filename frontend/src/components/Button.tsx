@@ -21,9 +21,9 @@ const variantes: Record<Variante, string> = {
   primary:
     "bg-navy text-white shadow-tarjeta hover:bg-navy-700 active:bg-navy-800 disabled:hover:bg-navy",
   secondary:
-    "border border-slate-200 bg-white text-slate-700 shadow-tarjeta hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900",
-  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
-  sutil: "bg-teal-50 text-teal-700 hover:bg-teal-100",
+    "border border-slate-200 bg-white text-slate-700 shadow-tarjeta hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-700 dark:hover:text-white",
+  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+  sutil: "bg-teal-50 text-teal-700 hover:bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-teal-900/60",
   danger: "bg-rose-600 text-white shadow-tarjeta hover:bg-rose-700",
 };
 

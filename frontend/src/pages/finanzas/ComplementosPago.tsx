@@ -150,7 +150,7 @@ export default function ComplementosPago() {
           },
         ]}
         columnas={[
-          { header: "Folio", render: (c) => <span className="font-medium text-slate-900">{c.folio}</span> },
+          { header: "Folio", render: (c) => <span className="font-medium text-slate-900 dark:text-slate-100">{c.folio}</span> },
           { header: "Factura", render: (c) => c.factura.numeroFactura },
           { header: "Cliente", render: (c) => c.factura.shipment.consignee.razonSocial },
           { header: "Fecha de pago", render: (c) => fecha(c.fechaPago) },

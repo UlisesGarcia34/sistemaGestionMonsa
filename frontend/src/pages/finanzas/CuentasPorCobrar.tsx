@@ -218,7 +218,7 @@ export default function CuentasPorCobrar() {
           {
             header: "Factura",
             render: (c) => (
-              <span className="font-medium text-slate-900">{c.factura?.numeroFactura}</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{c.factura?.numeroFactura}</span>
             ),
           },
           { header: "Embarque", render: (c) => c.factura?.shipment?.folio ?? "—" },
@@ -235,7 +235,7 @@ export default function CuentasPorCobrar() {
             header: "Vence",
             alinear: "der",
             render: (c) => (
-              <span className={c.vencida ? "font-semibold text-rose-600" : "text-slate-600"}>
+              <span className={c.vencida ? "font-semibold text-rose-600" : "text-slate-600 dark:text-slate-300"}>
                 {fecha(c.fechaVencimiento)}
               </span>
             ),
@@ -314,7 +314,7 @@ export default function CuentasPorCobrar() {
             <Field label="Num. de operacion / referencia" hint="Opcional">
               <TextInput value={numOperacion} onChange={(e) => setNumOperacion(e.target.value)} />
             </Field>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setCobrar(null)}>
                 Cancelar
               </Button>

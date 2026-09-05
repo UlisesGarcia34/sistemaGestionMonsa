@@ -344,15 +344,15 @@ export default function Cotizaciones() {
         columnas={[
           {
             header: "Folio",
-            render: (c) => <span className="font-medium text-slate-900">{c.folio}</span>,
+            render: (c) => <span className="font-medium text-slate-900 dark:text-slate-100">{c.folio}</span>,
           },
           { header: "Cliente", render: (c) => c.cliente?.razonSocial },
           { header: "Vendedor", render: (c) => c.vendedor?.nombre },
           {
             header: "Ruta",
             render: (c) => (
-              <span className="text-slate-600">
-                {c.origen} <span className="text-slate-300">→</span> {c.destino}
+              <span className="text-slate-600 dark:text-slate-300">
+                {c.origen} <span className="text-slate-300 dark:text-slate-600">→</span> {c.destino}
               </span>
             ),
           },
@@ -516,7 +516,7 @@ export default function Cotizaciones() {
                 />
               </Field>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setMostrarForm(false)}>
                 Cancelar
               </Button>
@@ -689,7 +689,7 @@ function RoutingOrderModal({
             onChange={(e) => set("especificaciones", e.target.value)}
           />
         </Field>
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cerrar
           </Button>

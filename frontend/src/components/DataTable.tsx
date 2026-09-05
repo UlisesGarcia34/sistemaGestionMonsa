@@ -43,9 +43,9 @@ interface DataTableProps<T> {
 }
 
 const tonosAccion = {
-  normal: "text-slate-500 hover:bg-slate-100 hover:text-navy-700",
-  acento: "text-teal-600 hover:bg-teal-50 hover:text-teal-700",
-  peligro: "text-rose-500 hover:bg-rose-50 hover:text-rose-700",
+  normal: "text-slate-500 hover:bg-slate-100 hover:text-navy-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-teal-300",
+  acento: "text-teal-600 hover:bg-teal-50 hover:text-teal-700 dark:text-teal-400 dark:hover:bg-teal-900/40 dark:hover:text-teal-300",
+  peligro: "text-rose-500 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-900/30 dark:hover:text-rose-300",
 } as const;
 
 function BotonAccion({
@@ -94,16 +94,16 @@ export function DataTable<T>({
   const totalCols = columnas.length + (renderDetalle ? 1 : 0) + (hayAcciones ? 1 : 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta">
+    <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-tarjeta dark:border-slate-800 dark:bg-slate-900">
       <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/70">
+            <tr className="border-b border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-800/40">
               {renderDetalle && <th className="w-8" />}
               {columnas.map((col) => (
                 <th
                   key={col.header}
-                  className={`whitespace-nowrap px-4 py-2.5 text-etiqueta font-semibold uppercase text-slate-500 ${
+                  className={`whitespace-nowrap px-4 py-2.5 text-etiqueta font-semibold uppercase text-slate-500 dark:text-slate-400 ${
                     col.alinear === "der" ? "text-right" : "text-left"
                   }`}
                 >
@@ -111,23 +111,23 @@ export function DataTable<T>({
                 </th>
               ))}
               {hayAcciones && (
-                <th className="whitespace-nowrap px-4 py-2.5 text-right text-etiqueta font-semibold uppercase text-slate-500">
+                <th className="whitespace-nowrap px-4 py-2.5 text-right text-etiqueta font-semibold uppercase text-slate-500 dark:text-slate-400">
                   Acciones
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {cargando && (
               <tr>
-                <td colSpan={totalCols} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={totalCols} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
                   Cargando...
                 </td>
               </tr>
             )}
             {!cargando && (!filas || filas.length === 0) && (
               <tr>
-                <td colSpan={totalCols} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={totalCols} className="px-4 py-10 text-center text-sm text-slate-400 dark:text-slate-500">
                   {vacioMensaje}
                 </td>
               </tr>
@@ -137,13 +137,13 @@ export function DataTable<T>({
               const expandida = abierta === k;
               return (
                 <Fragment key={k}>
-                  <tr className="transition-colors hover:bg-slate-50/70">
+                  <tr className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/60">
                     {renderDetalle && (
                       <td className="pl-3 pr-1">
                         <button
                           type="button"
                           onClick={() => setAbierta(expandida ? null : k)}
-                          className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                          className="flex h-6 w-6 items-center justify-center rounded text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-700 dark:hover:text-slate-300"
                           aria-label={expandida ? "Colapsar" : "Expandir"}
                           aria-expanded={expandida}
                         >
@@ -158,7 +158,7 @@ export function DataTable<T>({
                     {columnas.map((col) => (
                       <td
                         key={col.header}
-                        className={`px-4 py-2.5 text-slate-700 ${
+                        className={`px-4 py-2.5 text-slate-700 dark:text-slate-300 ${
                           // Los importes y fechas nunca se parten en dos
                           // lineas: una columna numerica que envuelve deja de
                           // ser comparable de un vistazo.
@@ -203,7 +203,7 @@ export function DataTable<T>({
                     )}
                   </tr>
                   {renderDetalle && expandida && (
-                    <tr className="bg-slate-50/60">
+                    <tr className="bg-slate-50/60 dark:bg-slate-800/40">
                       <td colSpan={totalCols} className="px-6 py-4">
                         {renderDetalle(row)}
                       </td>

@@ -110,7 +110,7 @@ function CeldaEta({ f }: { f: FilaOperacion }) {
     ? "text-rose-600 font-medium"
     : f.avisoLlegadaPendiente
       ? "text-amber-700 font-medium"
-      : "text-slate-600";
+      : "text-slate-600 dark:text-slate-300";
   const nota =
     f.diasParaEta == null
       ? null
@@ -250,7 +250,7 @@ export default function Operaciones() {
           valor: f.notificaciones?.length ? (
             <ul className="space-y-1">
               {f.notificaciones.map((n) => (
-                <li key={n.id} className="text-xs text-slate-600">
+                <li key={n.id} className="text-xs text-slate-600 dark:text-slate-400">
                   <span className="font-medium">{etiqueta(n.tipo)}</span> · {fecha(n.fechaEnviada)}
                   {n.enviadoPor?.nombre ? ` · ${n.enviadoPor.nombre}` : ""}
                   {n.comentario ? ` — ${n.comentario}` : ""}
@@ -307,9 +307,9 @@ export default function Operaciones() {
 
       {errorAccion && <Aviso tono="error">{errorAccion}</Aviso>}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta dark:border-slate-800 dark:bg-slate-900">
         <label className="block min-w-[11rem]">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Status</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Status</span>
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">Todos los activos</option>
             {STATUS_ACTIVOS.map((s) => (
@@ -320,7 +320,7 @@ export default function Operaciones() {
           </Select>
         </label>
         <label className="block min-w-[11rem]">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Customer service</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Customer service</span>
           <Select value={csId} onChange={(e) => setCsId(e.target.value)}>
             <option value="">Todos</option>
             {usuarios?.map((u) => (
@@ -374,21 +374,21 @@ export default function Operaciones() {
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
               <div>
                 <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Vessel / Voyage</dt>
-                <dd className="text-slate-700">{texto([f.vessel, f.voyage].filter(Boolean).join(" / "))}</dd>
+                <dd className="text-slate-700 dark:text-slate-300">{texto([f.vessel, f.voyage].filter(Boolean).join(" / "))}</dd>
               </div>
               <div>
                 <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Origen</dt>
-                <dd className="text-slate-700">
+                <dd className="text-slate-700 dark:text-slate-300">
                   {texto([f.puertoOrigen, f.paisOrigen].filter(Boolean).join(", "))}
                 </dd>
               </div>
               <div>
                 <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Destino</dt>
-                <dd className="text-slate-700">{texto(f.puertoDestino || f.destinoFinal)}</dd>
+                <dd className="text-slate-700 dark:text-slate-300">{texto(f.puertoDestino || f.destinoFinal)}</dd>
               </div>
               <div>
                 <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Dias en puerto</dt>
-                <dd className="text-slate-700">{f.diasEnPuerto != null ? `${f.diasEnPuerto} d` : "—"}</dd>
+                <dd className="text-slate-700 dark:text-slate-300">{f.diasEnPuerto != null ? `${f.diasEnPuerto} d` : "—"}</dd>
               </div>
             </dl>
           </div>
@@ -398,7 +398,7 @@ export default function Operaciones() {
             header: "Folio",
             render: (f) => (
               <div className="flex items-center gap-1.5">
-                <span className="font-medium text-slate-900">{f.folio}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">{f.folio}</span>
                 {f.avisoLlegadaPendiente && (
                   <BellRing size={13} className="text-amber-500" aria-label="Aviso de llegada pendiente" />
                 )}
@@ -521,7 +521,7 @@ function TrackingModal({
         )}
 
         <div>
-          <span className="mb-1.5 block text-xs font-medium text-slate-600">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600 dark:text-slate-400">
             Estatus del material
           </span>
           <EstatusMaterialTimeline
@@ -559,7 +559,7 @@ function TrackingModal({
           </Field>
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cancelar
           </Button>
@@ -603,7 +603,7 @@ function NotificacionModal({
         className="space-y-3"
       >
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Tipo de notificacion</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Tipo de notificacion</span>
           <Select value={tipo} onChange={(e) => setTipo(e.target.value)}>
             {TIPOS_NOTIFICACION.map((t) => (
               <option key={t} value={t}>
@@ -613,14 +613,14 @@ function NotificacionModal({
           </Select>
         </label>
         <label className="block">
-          <span className="mb-1 block text-xs font-medium text-slate-600">Comentario</span>
+          <span className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">Comentario</span>
           <input
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
           />
         </label>
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cancelar
           </Button>

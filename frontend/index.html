@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MGC | Sistema de gestion</title>
+    <script>
+      // Aplica el tema antes del primer paint (evita el flash de tema
+      // incorrecto que se veria si esto se hiciera desde un useEffect de
+      // React, que corre despues de montar). Misma clave que lib/theme.tsx.
+      (function () {
+        var guardado = localStorage.getItem("mgc.tema");
+        var oscuro =
+          guardado === "oscuro" ||
+          (!guardado && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        if (oscuro) document.documentElement.classList.add("dark");
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

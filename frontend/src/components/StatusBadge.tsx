@@ -5,15 +5,18 @@
 type Tono = "gris" | "navy" | "teal" | "ambar" | "positivo" | "rojo" | "violeta";
 
 const clasesTono: Record<Tono, { chip: string; punto: string }> = {
-  gris: { chip: "bg-slate-100 text-slate-600", punto: "bg-slate-400" },
-  navy: { chip: "bg-navy-50 text-navy-700", punto: "bg-navy-500" },
-  teal: { chip: "bg-teal-50 text-teal-700", punto: "bg-teal-500" },
-  ambar: { chip: "bg-amber-50 text-amber-700", punto: "bg-amber-400" },
+  gris: { chip: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300", punto: "bg-slate-400" },
+  navy: { chip: "bg-navy-50 text-navy-700 dark:bg-navy-900/40 dark:text-navy-300", punto: "bg-navy-500" },
+  teal: { chip: "bg-teal-50 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300", punto: "bg-teal-500" },
+  ambar: { chip: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300", punto: "bg-amber-400" },
   // "positivo" usa el teal de la marca, no un verde generico: el unico verde
   // del sistema es el de un cierre exitoso (emerald), reservado para eso.
-  positivo: { chip: "bg-emerald-50 text-emerald-700", punto: "bg-emerald-500" },
-  rojo: { chip: "bg-rose-50 text-rose-700", punto: "bg-rose-500" },
-  violeta: { chip: "bg-violet-50 text-violet-700", punto: "bg-violet-500" },
+  positivo: {
+    chip: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+    punto: "bg-emerald-500",
+  },
+  rojo: { chip: "bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300", punto: "bg-rose-500" },
+  violeta: { chip: "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300", punto: "bg-violet-500" },
 };
 
 // Mapa unico de status de dominio -> tono. Cubre cliente, proveedor, cotizacion,

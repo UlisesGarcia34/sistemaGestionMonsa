@@ -222,7 +222,7 @@ export default function Pricing() {
 
       {error && <Aviso tono="error">{error}</Aviso>}
 
-      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta">
+      <div className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta dark:border-slate-800 dark:bg-slate-900">
         <Field label="Proveedor" className="min-w-[12rem]">
           <Select value={proveedorId} onChange={(e) => setProveedorId(e.target.value)}>
             <option value="">Todos</option>
@@ -253,7 +253,7 @@ export default function Pricing() {
             ))}
           </Select>
         </Field>
-        <label className="flex items-center gap-2 pb-2 text-sm text-slate-600">
+        <label className="flex items-center gap-2 pb-2 text-sm text-slate-600 dark:text-slate-300">
           <input
             type="checkbox"
             checked={soloVigentes}
@@ -295,21 +295,21 @@ export default function Pricing() {
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
             <div>
               <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Proveedor</dt>
-              <dd className="text-slate-700">{t.proveedor?.nombre}</dd>
+              <dd className="text-slate-700 dark:text-slate-300">{t.proveedor?.nombre}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Ruta</dt>
-              <dd className="text-slate-700">
+              <dd className="text-slate-700 dark:text-slate-300">
                 {t.origen} → {t.destino}
               </dd>
             </div>
             <div>
               <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Compra</dt>
-              <dd className="text-slate-700">{dinero(t.montoCompra, t.moneda)}</dd>
+              <dd className="text-slate-700 dark:text-slate-300">{dinero(t.montoCompra, t.moneda)}</dd>
             </div>
             <div>
               <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">Vigencia</dt>
-              <dd className="text-slate-700">
+              <dd className="text-slate-700 dark:text-slate-300">
                 {fecha(t.vigenteDesde)} — {t.vigenteHasta ? fecha(t.vigenteHasta) : "abierta"}
               </dd>
             </div>
@@ -320,7 +320,7 @@ export default function Pricing() {
             header: "Proveedor",
             render: (t) => (
               <div className="min-w-0">
-                <p className="font-medium text-slate-900">{t.proveedor?.nombre}</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100">{t.proveedor?.nombre}</p>
                 <p className="text-xs text-slate-400">{etiqueta(t.proveedor?.tipo)}</p>
               </div>
             ),
@@ -328,7 +328,7 @@ export default function Pricing() {
           {
             header: "Ruta",
             render: (t) => (
-              <span className="text-slate-700">
+              <span className="text-slate-700 dark:text-slate-300">
                 {t.origen} <span className="text-slate-400">→</span> {t.destino}
               </span>
             ),
@@ -484,7 +484,7 @@ export default function Pricing() {
                 <TextInput type="date" value={nHasta} onChange={(e) => setNHasta(e.target.value)} />
               </Field>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setNueva(false)}>
                 Cancelar
               </Button>

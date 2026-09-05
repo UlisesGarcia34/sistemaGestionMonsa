@@ -299,7 +299,7 @@ export default function Bookings() {
           {
             header: "Cotizacion",
             render: (b) => (
-              <span className="font-medium text-slate-900">{b.cotizacion?.folio}</span>
+              <span className="font-medium text-slate-900 dark:text-slate-100">{b.cotizacion?.folio}</span>
             ),
           },
           { header: "Cliente", render: (b) => b.cotizacion?.cliente?.razonSocial },
@@ -307,7 +307,7 @@ export default function Bookings() {
             header: "Proveedor",
             render: (b) => (
               <div className="min-w-0">
-                <p className="text-slate-700">{b.proveedor?.nombre}</p>
+                <p className="text-slate-700 dark:text-slate-300">{b.proveedor?.nombre}</p>
                 <p className="text-xs text-slate-400">{etiqueta(b.proveedor?.tipo)}</p>
               </div>
             ),
@@ -317,7 +317,7 @@ export default function Bookings() {
             header: "Embarque",
             render: (b) =>
               b.shipment?.folio ? (
-                <span className="text-slate-700">{b.shipment.folio}</span>
+                <span className="text-slate-700 dark:text-slate-300">{b.shipment.folio}</span>
               ) : (
                 <span className="text-slate-300">—</span>
               ),
@@ -422,7 +422,7 @@ export default function Bookings() {
             <Field label="Referencia / SO number">
               <TextInput value={referencia} onChange={(e) => setReferencia(e.target.value)} />
             </Field>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setMostrarForm(false)}>
                 Cancelar
               </Button>

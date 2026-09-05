@@ -50,41 +50,41 @@ const TONOS: Record<
   navy: {
     degradado: "bg-gradient-to-br from-navy-400 to-navy-600",
     sombra: "shadow-navy-500/40",
-    suave: "bg-navy-50 text-navy-500",
-    anillo: "ring-navy-300",
-    texto: "text-navy-700",
+    suave: "bg-navy-50 text-navy-500 dark:bg-navy-900/40 dark:text-navy-300",
+    anillo: "ring-navy-300 dark:ring-navy-700",
+    texto: "text-navy-700 dark:text-navy-300",
     linea: "bg-navy-400",
   },
   teal: {
     degradado: "bg-gradient-to-br from-teal-400 to-teal-600",
     sombra: "shadow-teal-500/40",
-    suave: "bg-teal-50 text-teal-500",
-    anillo: "ring-teal-300",
-    texto: "text-teal-700",
+    suave: "bg-teal-50 text-teal-500 dark:bg-teal-900/40 dark:text-teal-300",
+    anillo: "ring-teal-300 dark:ring-teal-700",
+    texto: "text-teal-700 dark:text-teal-300",
     linea: "bg-teal-400",
   },
   ambar: {
     degradado: "bg-gradient-to-br from-amber-300 to-amber-500",
     sombra: "shadow-amber-500/40",
-    suave: "bg-amber-50 text-amber-600",
-    anillo: "ring-amber-300",
-    texto: "text-amber-700",
+    suave: "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300",
+    anillo: "ring-amber-300 dark:ring-amber-700",
+    texto: "text-amber-700 dark:text-amber-300",
     linea: "bg-amber-400",
   },
   violeta: {
     degradado: "bg-gradient-to-br from-violet-400 to-violet-600",
     sombra: "shadow-violet-500/40",
-    suave: "bg-violet-50 text-violet-500",
-    anillo: "ring-violet-300",
-    texto: "text-violet-700",
+    suave: "bg-violet-50 text-violet-500 dark:bg-violet-900/30 dark:text-violet-300",
+    anillo: "ring-violet-300 dark:ring-violet-700",
+    texto: "text-violet-700 dark:text-violet-300",
     linea: "bg-violet-400",
   },
   positivo: {
     degradado: "bg-gradient-to-br from-emerald-400 to-emerald-600",
     sombra: "shadow-emerald-500/40",
-    suave: "bg-emerald-50 text-emerald-500",
-    anillo: "ring-emerald-300",
-    texto: "text-emerald-700",
+    suave: "bg-emerald-50 text-emerald-500 dark:bg-emerald-900/30 dark:text-emerald-300",
+    anillo: "ring-emerald-300 dark:ring-emerald-700",
+    texto: "text-emerald-700 dark:text-emerald-300",
     linea: "bg-emerald-400",
   },
 };
@@ -147,7 +147,7 @@ export function EstatusMaterialTimeline({ modalidad, valor, onChange, sugerencia
               {i > 0 && (
                 <span
                   className={`-mr-px h-1 flex-1 rounded-full transition-colors duration-300 ${
-                    completado || actual ? tono.linea : "bg-slate-200"
+                    completado || actual ? tono.linea : "bg-slate-200 dark:bg-slate-700"
                   }`}
                   aria-hidden
                 />
@@ -170,7 +170,7 @@ export function EstatusMaterialTimeline({ modalidad, valor, onChange, sugerencia
                 </span>
                 <span
                   className={`whitespace-nowrap text-[11px] leading-none transition-colors ${
-                    actual ? `font-semibold ${tono.texto}` : alcanzado ? "font-medium text-slate-600" : `font-medium ${tono.texto} opacity-70`
+                    actual ? `font-semibold ${tono.texto}` : alcanzado ? "font-medium text-slate-600 dark:text-slate-300" : `font-medium ${tono.texto} opacity-70`
                   }`}
                 >
                   {etapa.nombre}
@@ -181,12 +181,12 @@ export function EstatusMaterialTimeline({ modalidad, valor, onChange, sugerencia
         })}
       </div>
       {personalizado && (
-        <p className="text-xs text-slate-500">
-          Estatus personalizado: <span className="font-medium text-navy-700">{valor}</span>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Estatus personalizado: <span className="font-medium text-navy-700 dark:text-navy-300">{valor}</span>
         </p>
       )}
       {sugerencia && sugerencia !== norm && (
-        <p className="text-xs text-amber-700">
+        <p className="text-xs text-amber-700 dark:text-amber-400">
           Sugerencia por las fechas capturadas: <span className="font-medium">{sugerencia}</span>
         </p>
       )}
@@ -204,7 +204,7 @@ export function ProgresoMaterial({
 }) {
   const etapas = definicionEtapas(modalidad);
   const idx = etapas.findIndex((e) => e.nombre === (valor ?? "").trim().toUpperCase());
-  if (idx < 0) return <span className="text-slate-600">{texto(valor)}</span>;
+  if (idx < 0) return <span className="text-slate-600 dark:text-slate-300">{texto(valor)}</span>;
   const etapa = etapas[idx];
   const tono = TONOS[etapa.tono];
   const Icono = etapa.icono;
@@ -213,8 +213,8 @@ export function ProgresoMaterial({
       <span className={`flex h-5 w-5 items-center justify-center rounded-full ${tono.suave}`}>
         <Icono size={11} strokeWidth={2.2} aria-hidden />
       </span>
-      <span className="font-medium text-navy-700">{etapa.nombre}</span>
-      <span className="text-slate-400">
+      <span className="font-medium text-navy-700 dark:text-navy-300">{etapa.nombre}</span>
+      <span className="text-slate-400 dark:text-slate-500">
         · {idx + 1}/{etapas.length}
       </span>
     </span>

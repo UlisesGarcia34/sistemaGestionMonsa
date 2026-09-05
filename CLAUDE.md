@@ -114,22 +114,53 @@ primero si falta un gate antes de escribir el endpoint.
   **sin meter colores ajenos a la marca**. Rojo (`rose`) y verde (`emerald`) estan reservados
   exclusivamente para el dato que lo amerita — perdida, vencido, cierre exitoso — nunca como
   decoracion.
-- **Logotipo**: dos archivos. `frontend/src/assets/LogoMonsa.png` (PNG sin canal alfa, fondo
-  casi blanco) en el **sidebar** y en la cabecera de los documentos.
-  `frontend/src/assets/LogoMonsaPNG.png` (PNG RGBA / fondo transparente, con el wordmark
-  "MONSA GLOBAL CARGO") encabeza el **login**. `backend/assets/logoMonsa.png` es la copia a
-  520 px de `LogoMonsa.png` para los PDF — ver seccion 9.
+- **Logotipo**: tres archivos. `frontend/src/assets/LogoMonsa.png` (PNG sin canal alfa, fondo
+  casi blanco `#F4F4F4`) en la cabecera de los documentos imprimibles.
+  `frontend/src/assets/LogoMonsaTransparente.png` — misma imagen que `LogoMonsa.png` pero con
+  canal alfa real (fondo quitado por umbral de color, sin libreria de imagenes: script
+  descartable, no versionado) — usado en el **sidebar** para que no se vea el rectangulo casi
+  blanco sobre el fondo `bg-white` del sidebar. `frontend/src/assets/LogoMonsaPNG.png` (PNG
+  RGBA, con el wordmark "MONSA GLOBAL CARGO" y un halo de color de fondo) encabeza el
+  **login**, sobre la tarjeta navy. `backend/assets/logoMonsa.png` es la copia a 520 px de
+  `LogoMonsa.png` para los PDF — ver seccion 9.
 - **Sidebar, Topbar y login (rediseno):** el `<Sidebar>` es **blanco** (`bg-white` +
-  `border-r`), solo logo + navegacion agrupada ("Operacion" / "Administracion"), sin numeros
-  de paso — el orden de `lib/navegacion.ts` ya es el de la cascada, y el CascadeStepper de cada
-  pagina ya comunica en que paso esta el usuario. Link activo con fondo `teal-50` + texto
-  `teal-700` + un punto teal (no relleno solido). La sesion (avatar, nombre, rol, cerrar
-  sesion) vive en `<Topbar>` (`components/Topbar.tsx`), una barra sticky arriba del contenido
-  con un breadcrumb del modulo activo a la izquierda — no en el fondo del sidebar. El `Login`
-  es un fondo `#F4F6FB` con patron de puntos y dos tarjetas `rounded-3xl` flotantes lado a
-  lado: izquierda navy con la textura `puerto-navy.jpg` muy velada + la lista de pasos del
-  sistema; derecha blanca con el logo, `<h2>` "Bienvenidos" y el formulario (correo /
-  contrasena con icono y ojo para ver/ocultar).
+  `border-r`), con el logotipo grande y centrado arriba (`h-20`, `justify-center`) — no una
+  franja pequena a la izquierda — seguido de logo + navegacion agrupada ("Operacion" /
+  "Administracion"), sin numeros de paso — el orden de `lib/navegacion.ts` ya es el de la
+  cascada, y el CascadeStepper de cada pagina ya comunica en que paso esta el usuario. Link
+  activo con fondo `teal-50` + texto `teal-700` + un punto teal (no relleno solido). La sesion
+  (avatar, nombre, rol, cerrar sesion) vive en `<Topbar>` (`components/Topbar.tsx`), una barra
+  sticky arriba del contenido con un breadcrumb del modulo activo a la izquierda y el boton de
+  tema (luna/sol) a la derecha — no en el fondo del sidebar. El `Login` es un fondo `#F4F6FB`
+  con patron de puntos y dos tarjetas `rounded-3xl` flotantes lado a lado: izquierda navy con
+  la textura `puerto-navy.jpg` muy velada + la lista de pasos del sistema; derecha blanca con
+  el logo, `<h2>` "Bienvenidos" y el formulario (correo / contrasena con icono y ojo para
+  ver/ocultar).
+- **Ancho de contenido:** el area de trabajo (`<main>` dentro de `Layout` en `App.tsx`) usa
+  `max-w-[1600px]` en vez del `max-w-7xl` original, para aprovechar pantallas anchas en las
+  tablas de Facturacion/Embarques/Operaciones, que son las que mas columnas concentran.
+- **Modo oscuro:** `tailwind.config.js` tiene `darkMode: "class"`. `frontend/src/lib/theme.tsx`
+  expone `ThemeProvider`/`useTheme` (mismo patron que `lib/auth.tsx`): guarda `"claro"` /
+  `"oscuro"` en `localStorage` (`mgc.tema`), cae a `prefers-color-scheme` si no hay nada
+  guardado, y alterna la clase `dark` en `<html>`. Un `<script>` inline en la cabecera de
+  `index.html` aplica esa clase ANTES de que React monte, para no parpadear del tema equivocado.
+  El toggle vive en `<Topbar>` (icono luna/sol). Convencion de paleta oscura, aplicada a **todos**
+  los componentes compartidos y a cada pagina (incluye las celdas de `<DataTable>` que fijaban
+  su propio color de texto, ej. folios/nombres en negrita — un bug real de contraste que se
+  encontro y corrigio durante el rollout, no solo un ajuste cosmetico):
+  - fondo de la app → `dark:bg-slate-950`; superficies elevadas (tarjetas, sidebar, topbar,
+    modales) → `dark:bg-slate-900`.
+  - bordes → `dark:border-slate-800` (`dark:border-slate-700` en divisores/hover dentro de
+    modales).
+  - texto fuerte → `dark:text-slate-100`/`dark:text-slate-200`; texto tenue →
+    `dark:text-slate-400`/`dark:text-slate-500` (UUIDs, fechas, metadatos).
+  - chips/tiles suaves de color de marca (`bg-teal-50 text-teal-700`) →
+    `dark:bg-teal-900/40 dark:text-teal-300` (mismo patron para navy/amber/emerald/rose/violet;
+    `/20`-`/30` de opacidad en los avisos).
+  - encabezados de tabla (`bg-slate-50`) → `dark:bg-slate-800/60`; `divide-slate-100` →
+    `dark:divide-slate-800`.
+  - Los documentos imprimibles (`<DocumentoImprimible>`) NO llevan modo oscuro: son reportes
+    JasperReports en escala de grises, exentos del lenguaje visual de la app (seccion 4.2.1).
 
 No se uso NestJS ni .NET porque el usuario pidio explicitamente Node + React + Tailwind.
 Mantener esa decision salvo instruccion contraria explicita.
@@ -200,7 +231,8 @@ monsa-gestion/
         │                         #  /operaciones, /finanzas[/:submodulo], /reportes,
         │                         #  /documentos/:entidad/:id/:tipo (vista imprimible, fuera del layout)
         ├── index.css             # Directivas Tailwind + reglas @media print (seccion 9)
-        ├── assets/               # LogoMonsa.png, LogoMonsaPNG.png, puerto-navy.jpg
+        ├── assets/               # LogoMonsa.png, LogoMonsaTransparente.png (sidebar),
+        │                         #   LogoMonsaPNG.png (login), puerto-navy.jpg
         ├── lib/
         │   ├── api.ts            # axios + interceptores (Bearer, 401 -> logout) + abrirPdf()
         │   │                     #   + descargarArchivo() (NUEVO, para el libro de Excel)
@@ -847,6 +879,15 @@ aguas abajo):
   corrigio en el momento un bug real: `listarFacturas()` no incluia `complementosPago`,
   provocando un `TypeError` en el frontend al cancelar desde la tabla (ya corregido, reusa
   `INCLUDE_FACTURA`).
+- **Repositorio Git**: subido a `https://github.com/UlisesGarcia34/sistemaGestionMonsa.git`
+  (rama `main`), con `.gitignore` (node_modules, dist, .env*, logs) y `README.md` en la raiz.
+- **Rediseno de Sidebar/Topbar/modo oscuro** (2026-09-04, ver seccion 3): logotipo transparente
+  mas grande y centrado en el sidebar, contenido de cada modulo a `max-w-[1600px]`, y toggle de
+  tema claro/oscuro completo (`ThemeProvider`, `darkMode: "class"`) aplicado a todos los
+  componentes compartidos y a cada pagina — incluida la correccion de un bug real de contraste
+  (celdas de `<DataTable>` con `text-slate-900` fijo, invisibles en fondo oscuro) encontrado
+  durante la verificacion visual en navegador. `npm run build` sin errores; verificado en
+  Dashboard, Cotizaciones, Embarques y Facturacion con el toggle en ambos sentidos.
 - **`usuarios`**: solo lectura. El alta de usuarios y la matriz de permisos por rol siguen
   fuera del MVP.
 - **`docs/requerimientos-pricing-customer-operaciones.md`** y

@@ -132,7 +132,7 @@ export default function Dashboard() {
           acento="navy"
           detalle={
             <>
-              <strong className="font-semibold text-slate-700">{kpis?.prospectos ?? 0}</strong>{" "}
+              <strong className="font-semibold text-slate-700 dark:text-slate-300">{kpis?.prospectos ?? 0}</strong>{" "}
               prospectos en pipeline, aun sin KYC completo
             </>
           }
@@ -144,7 +144,7 @@ export default function Dashboard() {
           acento="teal"
           detalle={
             <>
-              <strong className="font-semibold text-slate-700">
+              <strong className="font-semibold text-slate-700 dark:text-slate-300">
                 {kpis?.embarquesPorFacturar ?? 0}
               </strong>{" "}
               cerrados y listos para facturar
@@ -198,7 +198,7 @@ export default function Dashboard() {
           columnas={[
             {
               header: "Folio",
-              render: (r) => <span className="font-medium text-slate-900">{r.folio}</span>,
+              render: (r) => <span className="font-medium text-slate-900 dark:text-slate-100">{r.folio}</span>,
             },
             { header: "Consignee", render: (r) => r.consignee },
             { header: "Modalidad", render: (r) => r.modalidad },
@@ -259,8 +259,8 @@ export default function Dashboard() {
             {porVendedor?.map((row) => (
               <li key={row.vendedor} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-slate-700">{row.vendedor}</span>
-                  <span className="tabular text-sm text-slate-600">
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{row.vendedor}</span>
+                  <span className="tabular text-sm text-slate-600 dark:text-slate-400">
                     <span className="text-slate-400">{row.cotizaciones} cot ·</span>{" "}
                     <span className="font-semibold text-navy-700">
                       {dinero(row.ventaTotal ?? 0)}
@@ -291,7 +291,7 @@ export default function Dashboard() {
               {
                 header: "Factura",
                 render: (c) => (
-                  <span className="font-medium text-slate-900">{c.factura?.numeroFactura}</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{c.factura?.numeroFactura}</span>
                 ),
               },
               { header: "Cliente", render: (c) => c.cliente?.razonSocial },
@@ -302,7 +302,7 @@ export default function Dashboard() {
                 render: (c) => {
                   const vencido = c.fechaVencimiento && new Date(c.fechaVencimiento) < new Date();
                   return (
-                    <span className={vencido ? "font-semibold text-rose-600" : "text-slate-600"}>
+                    <span className={vencido ? "font-semibold text-rose-600" : "text-slate-600 dark:text-slate-300"}>
                       {fecha(c.fechaVencimiento)}
                     </span>
                   );
@@ -326,7 +326,7 @@ export default function Dashboard() {
               {
                 header: "Proveedor",
                 render: (p) => (
-                  <span className="font-medium text-slate-900">{p.proveedor?.nombre}</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">{p.proveedor?.nombre}</span>
                 ),
               },
               { header: "Embarque", render: (p) => p.shipment?.folio ?? "—" },
@@ -337,7 +337,7 @@ export default function Dashboard() {
                 render: (p) => {
                   const vencido = p.fechaLimitePago && new Date(p.fechaLimitePago) < new Date();
                   return (
-                    <span className={vencido ? "font-semibold text-rose-600" : "text-slate-600"}>
+                    <span className={vencido ? "font-semibold text-rose-600" : "text-slate-600 dark:text-slate-300"}>
                       {fecha(p.fechaLimitePago)}
                     </span>
                   );

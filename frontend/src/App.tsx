@@ -24,7 +24,7 @@ function RutaProtegida({ children }: { children: ReactNode }) {
 
   if (cargando) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-lienzo text-sm text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-lienzo text-sm text-slate-400 dark:bg-slate-950 dark:text-slate-500">
         Validando sesion...
       </div>
     );
@@ -37,12 +37,12 @@ function RutaProtegida({ children }: { children: ReactNode }) {
 
 function Layout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-lienzo">
+    <div className="flex min-h-screen bg-lienzo dark:bg-slate-950">
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
         <main className="flex-1 overflow-x-hidden">
-          <div className="mx-auto max-w-7xl px-6 py-7 lg:px-8">{children}</div>
+          <div className="mx-auto max-w-[1600px] px-6 py-7 lg:px-10">{children}</div>
         </main>
       </div>
     </div>

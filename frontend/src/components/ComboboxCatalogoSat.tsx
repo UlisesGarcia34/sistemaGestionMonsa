@@ -75,10 +75,10 @@ export function ComboboxCatalogoSat({
           setAbierto(true);
           buscar(texto);
         }}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(11,61,92,0.04)] transition-colors placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(11,61,92,0.04)] transition-colors placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
       />
       {abierto && resultados.length > 0 && (
-        <ul className="absolute z-20 mt-1 max-h-56 w-full min-w-[20rem] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-tarjeta">
+        <ul className="absolute z-20 mt-1 max-h-56 w-full min-w-[20rem] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-tarjeta dark:border-slate-700 dark:bg-slate-900">
           {resultados.map((r) => (
             <li key={r.clave}>
               <button
@@ -89,7 +89,7 @@ export function ComboboxCatalogoSat({
                   setAbierto(false);
                   onSeleccionar(r.clave, etiqueta);
                 }}
-                className="block w-full truncate px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-teal-50 hover:text-teal-700"
+                className="block w-full truncate px-3 py-1.5 text-left text-xs text-slate-700 hover:bg-teal-50 hover:text-teal-700 dark:text-slate-300 dark:hover:bg-teal-900/40 dark:hover:text-teal-300"
                 title={`${r.clave} — ${etiquetaCampo(r)}`}
               >
                 <span className="font-medium">{r.clave}</span> — {etiquetaCampo(r)}

@@ -276,7 +276,7 @@ function PanelClientes() {
           e.preventDefault();
           if (razonSocial.trim()) crear.mutate();
         }}
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta"
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="min-w-[16rem] flex-1">
           <Field label="Alta rapida de prospecto">
@@ -323,7 +323,7 @@ function PanelClientes() {
             header: "Razon social",
             render: (c) => (
               <div className="min-w-0">
-                <p className="font-medium text-slate-900">{c.razonSocial}</p>
+                <p className="font-medium text-slate-900 dark:text-slate-100">{c.razonSocial}</p>
                 {c.alias && <p className="text-xs text-slate-400">{c.alias}</p>}
               </div>
             ),
@@ -333,7 +333,7 @@ function PanelClientes() {
             header: "Credito",
             render: (c) =>
               c.diasCredito != null ? (
-                <span className="tabular text-slate-600">
+                <span className="tabular text-slate-600 dark:text-slate-300">
                   {c.diasCredito} d · {dinero(c.limiteCredito ?? 0)}
                 </span>
               ) : (
@@ -425,7 +425,7 @@ function PanelClientes() {
                 />
               </Field>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setActivar(null)}>
                 Cancelar
               </Button>
@@ -570,7 +570,7 @@ function PanelProveedores() {
           e.preventDefault();
           if (nombre.trim()) crear.mutate();
         }}
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta"
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-tarjeta dark:border-slate-800 dark:bg-slate-900"
       >
         <div className="min-w-[14rem] flex-1">
           <Field label="Nombre">
@@ -631,11 +631,11 @@ function PanelProveedores() {
               <p className="text-etiqueta font-semibold uppercase text-slate-500">
                 Tarifas vigentes
               </p>
-              <ul className="space-y-1 text-sm text-slate-600">
+              <ul className="space-y-1 text-sm text-slate-600 dark:text-slate-300">
                 {p.tarifas.map((t) => (
                   <li key={t.id} className="tabular">
                     {t.origen} → {t.destino} · {t.modalidad} ·{" "}
-                    <span className="font-medium text-slate-800">{dinero(t.montoCompra)}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{dinero(t.montoCompra)}</span>
                   </li>
                 ))}
               </ul>
@@ -649,7 +649,7 @@ function PanelProveedores() {
         columnas={[
           {
             header: "Nombre",
-            render: (p) => <span className="font-medium text-slate-900">{p.nombre}</span>,
+            render: (p) => <span className="font-medium text-slate-900 dark:text-slate-100">{p.nombre}</span>,
           },
           { header: "Tipo", render: (p) => etiqueta(p.tipo) },
           { header: "Tarifas", alinear: "der", render: (p) => p.tarifas?.length ?? 0 },
@@ -742,7 +742,7 @@ function PanelProveedores() {
                 />
               </Field>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setTarifaDe(null)}>
                 Cancelar
               </Button>

@@ -99,7 +99,7 @@ export function FormularioEdicion({
     <Modal titulo={titulo} descripcion={descripcion} onClose={onClose} maxWidth={maxWidth}>
       <form onSubmit={enviar} className="space-y-4">
         {error && (
-          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-700">
+          <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-700 dark:border-rose-900 dark:bg-rose-900/20 dark:text-rose-300">
             {error}
           </p>
         )}
@@ -112,7 +112,7 @@ export function FormularioEdicion({
               return (
                 <label
                   key={campo.nombre}
-                  className={`flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 ${
+                  className={`flex items-center gap-2.5 rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 dark:border-slate-700 dark:text-slate-200 ${
                     campo.ancho ? "sm:col-span-2" : ""
                   }`}
                 >
@@ -120,7 +120,7 @@ export function FormularioEdicion({
                     type="checkbox"
                     checked={!!valor}
                     onChange={(e) => actualizar(campo.nombre, e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/30"
+                    className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/30 dark:border-slate-600 dark:bg-slate-800"
                   />
                   {campo.label}
                 </label>
@@ -171,7 +171,7 @@ export function FormularioEdicion({
           })}
         </div>
 
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cancelar
           </Button>

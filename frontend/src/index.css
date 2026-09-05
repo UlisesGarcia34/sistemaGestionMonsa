@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-lienzo text-slate-900 antialiased;
+    @apply bg-lienzo text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100;
   }
 
   /* Numeros siempre en cifras de ancho fijo: las columnas de importes de las

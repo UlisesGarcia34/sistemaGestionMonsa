@@ -147,7 +147,7 @@ function Dato({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
     <div>
       <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400">{label}</dt>
-      <dd className="text-sm text-slate-700">{valor}</dd>
+      <dd className="text-sm text-slate-700 dark:text-slate-300">{valor}</dd>
     </div>
   );
 }
@@ -486,7 +486,7 @@ export default function Embarques() {
           valor: s.notificaciones?.length ? (
             <ul className="space-y-1">
               {s.notificaciones.map((n) => (
-                <li key={n.id} className="text-xs text-slate-600">
+                <li key={n.id} className="text-xs text-slate-600 dark:text-slate-400">
                   <span className="font-medium">{etiqueta(n.tipo)}</span> · {fecha(n.fechaEnviada)}
                   {n.enviadoPor?.nombre ? ` · ${n.enviadoPor.nombre}` : ""}
                   {n.comentario ? ` — ${n.comentario}` : ""}
@@ -642,7 +642,7 @@ export default function Embarques() {
 
             {/* Documentos de transporte: se muestran siempre, deshabilitados
                 con su motivo cuando el numero todavia no esta capturado. */}
-            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
+            <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
               <span className="text-etiqueta font-semibold uppercase text-slate-500">
                 Documentos
               </span>
@@ -677,7 +677,7 @@ export default function Embarques() {
         columnas={[
           {
             header: "Folio",
-            render: (s) => <span className="font-medium text-slate-900">{s.folio}</span>,
+            render: (s) => <span className="font-medium text-slate-900 dark:text-slate-100">{s.folio}</span>,
           },
           { header: "Consignee", render: (s) => s.consignee?.razonSocial },
           { header: "Proveedor", render: (s) => s.booking?.proveedor?.nombre },
@@ -875,7 +875,7 @@ export default function Embarques() {
                 required
               />
             </Field>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <Button type="button" variante="ghost" onClick={() => setMostrarForm(false)}>
                 Cancelar
               </Button>
@@ -921,7 +921,7 @@ function ValorizacionModal({
         className="space-y-3"
       >
         {est && (
-          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
             Estimado en la cotizacion: venta {texto(est.montoVenta ? String(est.montoVenta) : null)} ·
             compra {texto(est.montoCompra ? String(est.montoCompra) : null)} {est.moneda ?? ""}
           </p>
@@ -946,7 +946,7 @@ function ValorizacionModal({
             />
           </Field>
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cancelar
           </Button>
@@ -1000,7 +1000,7 @@ function NotificacionModal({
         <Field label="Comentario">
           <TextInput value={comentario} onChange={(e) => setComentario(e.target.value)} />
         </Field>
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
           <Button type="button" variante="ghost" onClick={onClose}>
             Cancelar
           </Button>
