@@ -5,42 +5,44 @@ import {
   actualizarTrackingSchema,
   confirmarValorizacionSchema,
   crearShipmentSchema,
+  versionShipmentSchema, cancelarShipmentSchema, filtrosShipmentSchema, paginaShipmentSchema,
 } from "./shipment.schema";
 import * as shipmentService from "./shipment.service";
 
 export async function crear(req: Request, res: Response) {
   const data = crearShipmentSchema.parse(req.body);
-  const shipment = await shipmentService.crearShipment(data);
+  const shipment = await shipmentService.crearShipment(data, req.usuario?.sub);
   res.status(201).json(shipment);
 }
 
 export async function actualizar(req: Request, res: Response) {
   const data = actualizarShipmentSchema.parse(req.body);
-  const shipment = await shipmentService.actualizarShipment(req.params.id, data);
+  const shipment = await shipmentService.actualizarShipment(req.params.id, data, req.usuario?.sub);
   res.json(shipment);
 }
 
 export async function actualizarTracking(req: Request, res: Response) {
   const data = actualizarTrackingSchema.parse(req.body);
-  const shipment = await shipmentService.actualizarTracking(req.params.id, data);
+  const shipment = await shipmentService.actualizarTracking(req.params.id, data, req.usuario?.sub);
   res.json(shipment);
 }
 
 export async function actualizarDocumento(req: Request, res: Response) {
   const data = actualizarDocumentoSchema.parse(req.body);
-  const documento = await shipmentService.actualizarDocumento(req.params.id, data);
+  const documento = await shipmentService.actualizarDocumento(req.params.id, data, req.usuario?.sub);
   res.json(documento);
 }
 
 // TODO requireRol(VENTAS): la valorizacion la confirma el area de ventas.
 export async function confirmarValorizacion(req: Request, res: Response) {
   const data = confirmarValorizacionSchema.parse(req.body);
-  const shipment = await shipmentService.confirmarValorizacion(req.params.id, data);
+  const shipment = await shipmentService.confirmarValorizacion(req.params.id, data, req.usuario?.sub);
   res.json(shipment);
 }
 
 export async function cerrar(req: Request, res: Response) {
-  const resultado = await shipmentService.cerrarShipment(req.params.id);
+  const { version } = versionShipmentSchema.parse(req.body);
+  const resultado = await shipmentService.cerrarShipment(req.params.id, version, req.usuario?.sub);
   res.json(resultado);
 }
 
@@ -53,4 +55,11 @@ export async function listar(req: Request, res: Response) {
 export async function obtener(req: Request, res: Response) {
   const shipment = await shipmentService.obtenerShipment(req.params.id);
   res.json(shipment);
+}
+
+export async function cancelar(req: Request, res: Response) {
+  res.json(await shipmentService.cancelarShipment(req.params.id, cancelarShipmentSchema.parse(req.body), req.usuario?.sub));
+}
+export async function pagina(req: Request, res: Response) {
+  res.json(await shipmentService.paginaShipments(filtrosShipmentSchema.parse(req.query), paginaShipmentSchema.parse(req.query)));
 }
