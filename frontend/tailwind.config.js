@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Outfit", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
+      },
       colors: {
         // Paleta de marca del proyecto. El valor base (navy / teal / amber) es
         // el mismo de la presentacion ejecutiva; las escalas se derivan de el
