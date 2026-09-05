@@ -1,0 +1,648 @@
+// Schema del sistema de gestion de Monsa Global Cargo (MGC)
+// Modelo derivado del ERD validado contra REP_EMBARQUES_MGC26_DASHBOARD.xlsx
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums (migrados de la hoja LISTAS del Excel) ----------
+
+enum TipoOperacion {
+  IMPORTACION
+  EXPORTACION
+  TERRESTRE
+}
+
+enum ModalidadCarga {
+  FCL
+  LCL
+  AEREO
+  TERRESTRE
+  FTL
+  LTL
+  SEGURO
+}
+
+enum StatusShipment {
+  NUEVO_EMBARQUE
+  BOOKING_CONFIRMED
+  PARA_CERRAR
+  PARA_FACTURAR
+  FACTURADO
+  CANCELADO
+  TERMINADO
+}
+
+enum StatusCotizacion {
+  BORRADOR
+  ENVIADA
+  ACEPTADA
+  RECHAZADA
+  EXPIRADA
+}
+
+enum StatusBooking {
+  SOLICITADO
+  CONFIRMADO
+  CANCELADO
+}
+
+enum TipoProveedor {
+  NAVIERA
+  AEROLINEA
+  COLOADER
+  AGENTE_ADUANAL
+  TRANSPORTISTA
+  ALMACEN
+  SEGURO
+  OTRO
+}
+
+enum EstatusCliente {
+  PROSPECTO
+  EN_VALIDACION_KYC
+  ACTIVO
+  SUSPENDIDO
+}
+
+enum EstatusProveedor {
+  EN_HOMOLOGACION
+  ACTIVO
+  SUSPENDIDO
+}
+
+// Tipo de tarifa negociada por Pricing (hoja LISTAS del Excel + dictado de
+// Customer Service). No cambia como se cotiza; solo clasifica el origen del
+// precio para que Ventas sepa que esta usando.
+enum TipoTarifa {
+  CONTRATO // fija por vigencia negociada con la linea
+  SPOT // cotizacion puntual, sin vigencia larga
+  BASKET // escalonada por producto o por volumen
+}
+
+// Estado del Routing Order / instrucciones que el cliente entrega tras aceptar
+// la cotizacion. RECIBIDO es lo que habilita el gate 3 (crear el booking).
+enum StatusRoutingOrder {
+  SOLICITADO
+  RECIBIDO
+}
+
+// Tipo de servicio de entrega pactado en el Routing Order. Es una decision de
+// negocio real con estas cinco variantes (ver Anexo de
+// docs/requerimientos-pricing-customer-operaciones.md).
+enum TipoServicioEntrega {
+  CY_PUERTO // destino final = el mismo puerto (Manzanillo, Veracruz)
+  DENTRO_BL_RAIL // a bodega via tren, dentro del BL (contratado con la naviera)
+  DENTRO_BL_TRUCK // a bodega via camion, dentro del BL
+  FUERA_BL_CAMION // camion contratado por fuera del BL
+  RAM // hasta aduana interna (ej. Pantaco); ahi termina el servicio de Monsa
+}
+
+// Estado de emision de un conocimiento de embarque (House o Master). Formaliza
+// lo que antes era texto libre en Documento.emisionHbl / emisionMbl.
+enum EstatusEmisionBL {
+  DRAFT
+  FINAL
+}
+
+// Tipos de notificacion puntual al cliente durante el seguimiento. Reemplaza
+// la idea de un unico booleano "aviso enviado": el equipo notifica en varios
+// momentos distintos (cutoffs, ETD, ETA, aviso de arribo, solicitud de factura).
+enum TipoNotificacion {
+  CUTOFF_DOCUMENTAL
+  CUTOFF_CONTENEDOR
+  ETD
+  ETA
+  AVISO_ARRIBO
+  SOLICITUD_FACTURA
+  OTRO
+}
+
+// Una PROFORMA se solicita durante el seguimiento (antes de cerrar el embarque)
+// y no requiere CFDI timbrado. Una FINAL sigue el flujo fiscal completo.
+enum TipoFactura {
+  PROFORMA
+  FINAL
+}
+
+// Ciclo de vida fiscal compartido por Factura y ComplementoPago. PROFORMA
+// nunca sale de BORRADOR (no es un CFDI); FINAL recorre las 3 etapas: se
+// revisa en BORRADOR, se congela con "enviar a timbrado" y solo entonces se
+// timbra (simulado). La Cuenta por Cobrar nace al llegar a TIMBRADA, no antes
+// (ver comentario en el modelo Factura).
+enum EstatusDocumentoFiscal {
+  BORRADOR
+  PENDIENTE_TIMBRADO
+  TIMBRADA
+  CANCELADA
+}
+
+// PUE = pago en una sola exhibicion (no genera complemento de pago). PPD =
+// pago en parcialidades o diferido (cada cobro genera un ComplementoPago).
+enum MetodoPagoCfdi {
+  PUE
+  PPD
+}
+
+// Ciclo de vida de la cobranza de una factura ya emitida al cliente.
+// Vive aparte de Factura (que modela el CFDI / documento fiscal) por la
+// misma razon que CuentaPorPagar vive aparte de la factura del proveedor:
+// es un proceso con estados y fechas propios (ver CLAUDE.md seccion 5.1).
+enum EstatusCobro {
+  PENDIENTE
+  PARCIAL
+  COBRADA
+  VENCIDA
+}
+
+// ---------- Catalogos maestros ----------
+
+model Usuario {
+  id           String     @id @default(uuid())
+  nombre       String
+  email        String     @unique
+  rol          RolUsuario
+  // Hash bcrypt de la contrasena. Nullable porque los usuarios sembrados antes
+  // del modulo de auth existen sin credenciales; un usuario sin passwordHash
+  // simplemente no puede iniciar sesion. NUNCA se expone en una respuesta de la
+  // API -- todas las lecturas de Usuario pasan por SELECT_USUARIO_PUBLICO
+  // (modules/usuarios/usuario.service.ts).
+  passwordHash String?
+  activo       Boolean    @default(true)
+  creadoEn     DateTime   @default(now())
+
+  cotizacionesVendidas   Cotizacion[]          @relation("Vendedor")
+  shipmentsAtendidos     Shipment[]            @relation("CustomerService")
+  notificacionesEnviadas NotificacionEnviada[] @relation("NotificacionesEnviadas")
+}
+
+enum RolUsuario {
+  VENTAS
+  OPERACIONES
+  CUSTOMER_SERVICE
+  FINANZAS
+  CONTABILIDAD
+  ADMIN
+}
+
+model Cliente {
+  id                   String         @id @default(uuid())
+  razonSocial          String
+  alias                String?
+  rfc                  String?        @unique
+  estatus              EstatusCliente @default(PROSPECTO)
+  limiteCredito        Decimal?       @db.Decimal(14, 2)
+  diasCredito          Int?
+  contactoNombre       String?
+  contactoEmail        String?
+  contactoTel          String?
+  // Datos fiscales del receptor para el CFDI (facturacion.md seccion 1). Se
+  // capturan aqui y se copian ("snapshot") a la Factura al emitirla, para que
+  // un CFDI ya emitido no cambie si despues se edita el cliente.
+  regimenFiscal        String?
+  usoCfdi              String?
+  codigoPostal         String?
+  // Escape hatch del gate 3: si un cliente no requiere Routing Order formal
+  // (casos simples), sus bookings no lo exigen. Por defecto todos lo requieren.
+  requiereRoutingOrder Boolean        @default(true)
+  creadoEn             DateTime       @default(now())
+  actualizadoEn        DateTime       @updatedAt
+
+  cotizaciones           Cotizacion[]
+  shipmentsComoConsignee Shipment[]        @relation("Consignee")
+  cuentasPorCobrar       CuentaPorCobrar[]
+
+  @@index([estatus])
+}
+
+model Proveedor {
+  id             String           @id @default(uuid())
+  nombre         String
+  tipo           TipoProveedor
+  estatus        EstatusProveedor @default(EN_HOMOLOGACION)
+  contactoNombre String?
+  contactoEmail  String?
+  contactoTel    String?
+  creadoEn       DateTime         @default(now())
+
+  tarifas                 Tarifa[]
+  bookings                Booking[]
+  cuentasPorPagar         CuentaPorPagar[]
+  routingOrdersComoAgente RoutingOrder[]   @relation("RoutingOrderAgente")
+
+  @@index([tipo, estatus])
+}
+
+model Tarifa {
+  id           String         @id @default(uuid())
+  proveedorId  String
+  proveedor    Proveedor      @relation(fields: [proveedorId], references: [id])
+  origen       String
+  destino      String
+  modalidad    ModalidadCarga
+  tipo         TipoTarifa     @default(CONTRATO)
+  montoCompra  Decimal        @db.Decimal(14, 2)
+  moneda       String         @default("USD")
+  vigenteDesde DateTime
+  vigenteHasta DateTime?
+
+  @@index([proveedorId, modalidad])
+}
+
+// ---------- Cadena comercial: prospecto -> cotizacion -> booking -> shipment ----------
+
+model Cotizacion {
+  id          String           @id @default(uuid())
+  folio       String           @unique
+  clienteId   String
+  cliente     Cliente          @relation(fields: [clienteId], references: [id])
+  vendedorId  String
+  vendedor    Usuario          @relation("Vendedor", fields: [vendedorId], references: [id])
+  incoterm    String
+  modalidad   ModalidadCarga
+  origen      String
+  destino     String
+  montoVenta  Decimal          @db.Decimal(14, 2)
+  montoCompra Decimal          @db.Decimal(14, 2)
+  moneda      String           @default("USD")
+  status      StatusCotizacion @default(BORRADOR)
+  validaHasta DateTime?
+  creadoEn    DateTime         @default(now())
+
+  booking      Booking?
+  routingOrder RoutingOrder?
+
+  @@index([clienteId, status])
+}
+
+// ---------- Routing Order / instrucciones del cliente ----------
+// Se pide al cliente cuando acepta la cotizacion (gate 2) y ANTES de que exista
+// el booking. Contiene los datos que Customer Service necesita para instruir al
+// agente. Un booking no se crea sin un RoutingOrder en status RECIBIDO cuando el
+// cliente lo requiere (gate 3, ver bookings/booking.service.ts).
+model RoutingOrder {
+  id           String             @id @default(uuid())
+  cotizacionId String             @unique
+  cotizacion   Cotizacion         @relation(fields: [cotizacionId], references: [id])
+  status       StatusRoutingOrder @default(SOLICITADO)
+
+  // El consignee NO se duplica aqui: es cotizacion.cliente.
+  shipperNombre       String?
+  shipperDireccion    String?
+  pol                 String? // puerto de carga
+  pod                 String? // puerto de destino
+  destinoFinal        String?
+  tipoServicioEntrega TipoServicioEntrega?
+  especificaciones    String?              @db.Text
+
+  // Agente que el vendedor indica a Customer Service para hacer la reservacion.
+  agenteId String?
+  agente   Proveedor? @relation("RoutingOrderAgente", fields: [agenteId], references: [id])
+
+  fechaSolicitud DateTime  @default(now())
+  fechaRecibido  DateTime?
+  creadoEn       DateTime  @default(now())
+  actualizadoEn  DateTime  @updatedAt
+}
+
+model Booking {
+  id           String        @id @default(uuid())
+  cotizacionId String        @unique
+  cotizacion   Cotizacion    @relation(fields: [cotizacionId], references: [id])
+  proveedorId  String
+  proveedor    Proveedor     @relation(fields: [proveedorId], references: [id])
+  referencia   String? // SO / numero otorgado por naviera o coloader
+  status       StatusBooking @default(SOLICITADO)
+  confirmadoEn DateTime?
+  creadoEn     DateTime      @default(now())
+
+  shipment Shipment?
+}
+
+// ---------- Nucleo operativo: Shipment ----------
+
+model Shipment {
+  id        String  @id @default(uuid())
+  folio     String  @unique // ej. MGC26000001
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  tipoOperacion   TipoOperacion
+  modalidad       ModalidadCarga
+  status          StatusShipment @default(NUEVO_EMBARQUE)
+  estatusMaterial String? // EN TRANSITO / EN PUERTO / TERRESTRE / POR ZARPAR ...
+
+  consigneeId       String
+  consignee         Cliente  @relation("Consignee", fields: [consigneeId], references: [id])
+  shipperNombre     String
+  customerServiceId String?
+  customerService   Usuario? @relation("CustomerService", fields: [customerServiceId], references: [id])
+
+  incoterm      String?
+  poCliente     String? // PO / referencia de compra del cliente (columna "PO" del Excel)
+  vessel        String?
+  voyage        String?
+  puertoOrigen  String?
+  paisOrigen    String?
+  puertoDestino String?
+  destinoFinal  String?
+
+  etd             DateTime?
+  eta             DateTime?
+  fechaArriboReal DateTime?
+  fechaLiberacion DateTime?
+
+  grossWeight Decimal? @db.Decimal(12, 2)
+  cbm         Decimal? @db.Decimal(12, 3)
+  totalItems  Int?
+
+  // Expediente fisico de la carpeta (columna "INDICAR SI HAY EXPEDIENTE" del Excel).
+  expedienteFisico Boolean @default(false)
+
+  // Valorizacion: costo y venta REALES que Ventas confirma antes de facturar
+  // (distintos del estimado que vive en la Cotizacion). El gate 6 exige
+  // valorizacionConfirmada para poder generar cualquier factura.
+  valorizacionVenta        Decimal?  @db.Decimal(14, 2)
+  valorizacionCompra       Decimal?  @db.Decimal(14, 2)
+  valorizacionConfirmada   Boolean   @default(false)
+  valorizacionConfirmadaEn DateTime?
+
+  // Operaciones: revalidacion ante la naviera y envio del BL endosado al cliente.
+  fechaRevalidacionNaviera DateTime?
+  blEndosadoEnviado        Boolean   @default(false)
+  fechaBlEndosadoEnviado   DateTime?
+
+  creadoEn      DateTime @default(now())
+  actualizadoEn DateTime @updatedAt
+
+  documento       Documento?
+  contenedores    Contenedor[]
+  costosDemoras   CostoDemora[]
+  cuentasPorPagar CuentaPorPagar[]
+  facturas        Factura[]
+  notificaciones  NotificacionEnviada[]
+
+  @@index([status])
+  @@index([modalidad])
+  @@index([eta])
+}
+
+// ---------- Log de notificaciones al cliente ----------
+// Cada aviso puntual que Customer Service manda al cliente durante el
+// seguimiento. Es un log: no se edita ni se borra.
+model NotificacionEnviada {
+  id           String           @id @default(uuid())
+  shipmentId   String
+  shipment     Shipment         @relation(fields: [shipmentId], references: [id])
+  tipo         TipoNotificacion
+  fechaEnviada DateTime         @default(now())
+  enviadoPorId String?
+  enviadoPor   Usuario?         @relation("NotificacionesEnviadas", fields: [enviadoPorId], references: [id])
+  comentario   String?          @db.Text
+  creadoEn     DateTime         @default(now())
+
+  @@index([shipmentId])
+}
+
+model Documento {
+  id                    String            @id @default(uuid())
+  shipmentId            String            @unique
+  shipment              Shipment          @relation(fields: [shipmentId], references: [id])
+  mbl                   String?
+  hbl                   String?
+  manifiesto            String?
+  // Antes texto libre; ahora enum DRAFT/FINAL para poder alertar cuando un
+  // documento sigue en borrador (Customer Service recibe los BL en draft antes
+  // de la version final).
+  estatusEmisionHbl     EstatusEmisionBL?
+  estatusEmisionMbl     EstatusEmisionBL?
+  cartaInstruccionesUrl String?
+}
+
+model Contenedor {
+  id         String   @id @default(uuid())
+  shipmentId String
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+  numero     String?
+  tipo       String? // 20DC / 40HC / 40DC ...
+  sello      String?
+}
+
+model CostoDemora {
+  id                String   @id @default(uuid())
+  shipmentId        String
+  shipment          Shipment @relation(fields: [shipmentId], references: [id])
+  diasDemora        Int      @default(0)
+  costoDemora       Decimal? @db.Decimal(14, 2)
+  ventaDemoraSinIva Decimal? @db.Decimal(14, 2)
+}
+
+// ---------- Finanzas ----------
+
+model CuentaPorPagar {
+  id                  String    @id @default(uuid())
+  shipmentId          String?
+  shipment            Shipment? @relation(fields: [shipmentId], references: [id])
+  proveedorId         String
+  proveedor           Proveedor @relation(fields: [proveedorId], references: [id])
+  numeroFactura       String?
+  monto               Decimal   @db.Decimal(14, 2)
+  moneda              String    @default("MXN")
+  fechaSolicitud      DateTime?
+  fechaLimitePago     DateTime?
+  fechaPagoConfirmado DateTime?
+  esGarantia          Boolean   @default(false)
+  comentarios         String?
+
+  @@index([proveedorId])
+  @@index([fechaLimitePago])
+}
+
+// ---------- Facturacion (CFDI) ----------
+
+// Un embarque puede tener a lo sumo una PROFORMA y una FINAL (@@unique por
+// [shipmentId, tipo]). La proforma se pide durante el seguimiento y no timbra;
+// la final sigue el flujo fiscal y genera la cuenta por cobrar.
+// Nace SIEMPRE en BORRADOR (revisable, sin efectos aguas abajo). Solo al
+// timbrarse (factura.service.marcarTimbrada) nace su CuentaPorCobrar y el
+// Shipment pasa a FACTURADO -- antes de eso es captura en revision, no un CFDI
+// emitido. PROFORMA no timbra nunca: se queda en BORRADOR.
+model Factura {
+  id            String                 @id @default(uuid())
+  shipmentId    String
+  shipment      Shipment               @relation(fields: [shipmentId], references: [id])
+  tipo          TipoFactura            @default(FINAL)
+  numeroFactura String                 @unique
+  estatus       EstatusDocumentoFiscal @default(BORRADOR)
+  cfdiUuid      String?
+  montoSinIva   Decimal                @db.Decimal(14, 2)
+  moneda        String                 @default("USD")
+  fechaTimbrado DateTime?
+  creadoEn      DateTime               @default(now())
+
+  // Snapshot fiscal del receptor al momento de facturar (CLAUDE.md seccion
+  // 5.3): un CFDI ya generado no debe cambiar si luego se edita el cliente.
+  regimenFiscalReceptor String?
+  usoCfdi               String?
+  codigoPostalReceptor  String?
+  formaPago             String?
+  metodoPago            MetodoPagoCfdi @default(PUE)
+  condicionesPago       String?
+  tipoCambio            Decimal?       @db.Decimal(10, 4)
+  retencionIvaTasa      Decimal?       @db.Decimal(5, 2)
+  retencionIsrTasa      Decimal?       @db.Decimal(5, 2)
+
+  // Cancelacion (solo desde TIMBRADA). motivoCancelacion es la clave del
+  // catalogo SAT c_MotivoCancelacion (01-04); folioSustitucionUuid solo
+  // aplica al motivo 01 (comprobante con errores CON relacion).
+  motivoCancelacion    String?
+  folioSustitucionUuid String?
+  fechaCancelacion     DateTime?
+
+  cuentaPorCobrar  CuentaPorCobrar?
+  conceptos        ConceptoFactura[]
+  complementosPago ComplementoPago[]
+
+  @@unique([shipmentId, tipo])
+}
+
+// Una linea del CFDI. La factura del flujo rapido (un solo monto) nace con UN
+// concepto generado automaticamente; en BORRADOR se puede editar/partir en
+// varias lineas via PUT /api/facturas/:id/conceptos.
+model ConceptoFactura {
+  id             String  @id @default(uuid())
+  facturaId      String
+  factura        Factura @relation(fields: [facturaId], references: [id])
+  claveProdServ  String // c_ClaveProdServ del SAT, ej. 78101803
+  claveUnidad    String // c_ClaveUnidad del SAT, ej. E48
+  unidad         String?
+  cantidad       Decimal @default(1) @db.Decimal(12, 3)
+  descripcion    String  @db.Text
+  valorUnitario  Decimal @db.Decimal(14, 2)
+  importe        Decimal @db.Decimal(14, 2)
+  objetoImpuesto String  @default("02") // c_ObjetoImp: 01 no objeto, 02 si objeto de impuesto
+  ivaTasa        Decimal @default(16) @db.Decimal(5, 2)
+  ivaImporte     Decimal @db.Decimal(14, 2)
+
+  @@index([facturaId])
+}
+
+// El REP (Recepcion de Pagos). Nace SOLO desde
+// cuentas-por-cobrar/cxc.service.registrarCobro, nunca a mano, cuando la
+// factura relacionada es FINAL + TIMBRADA + metodoPago PPD -- asi nunca se
+// desincroniza de un cobro real (CLAUDE.md seccion 5.3 / facturacion.md
+// seccion 4).
+model ComplementoPago {
+  id            String                 @id @default(uuid())
+  facturaId     String
+  factura       Factura                @relation(fields: [facturaId], references: [id])
+  folio         String                 @unique // MGC-PAGO-000001
+  fechaPago     DateTime               @default(now())
+  monto         Decimal                @db.Decimal(14, 2)
+  moneda        String                 @default("USD")
+  tipoCambio    Decimal?               @db.Decimal(10, 4)
+  formaPago     String
+  numOperacion  String?
+  saldoAnterior Decimal                @db.Decimal(14, 2)
+  saldoInsoluto Decimal                @db.Decimal(14, 2)
+  estatus       EstatusDocumentoFiscal @default(BORRADOR)
+  cfdiUuid      String?
+  fechaTimbrado DateTime?
+  creadoEn      DateTime               @default(now())
+
+  // Cancelacion, mismo criterio que Factura.
+  motivoCancelacion    String?
+  folioSustitucionUuid String?
+  fechaCancelacion     DateTime?
+
+  @@index([facturaId])
+}
+
+// ---------- Catalogos oficiales del SAT (CFDI 4.0) ----------
+// Poblados por el script one-off backend/prisma/importarCatalogosSat.ts (NO
+// forma parte de `npm run seed`: son ~55,000 filas de datos de referencia que
+// no cambian con el desarrollo dia a dia). Fuente: mirror comunitario
+// sincronizado desde el SAT (ver CLAUDE.md seccion 5.5) -- se consultan via
+// modules/catalogos-sat/ (busqueda con LIKE, sin FULLTEXT: el volumen no lo
+// amerita).
+model SatClaveProdServ {
+  clave             String  @id
+  descripcion       String  @db.Text
+  palabrasSimilares String? @db.Text
+
+  @@index([descripcion(length: 100)])
+}
+
+model SatClaveUnidad {
+  clave   String  @id
+  nombre  String
+  simbolo String?
+}
+
+model SatRegimenFiscal {
+  clave        String  @id
+  descripcion  String
+  aplicaFisica Boolean @default(true)
+  aplicaMoral  Boolean @default(true)
+}
+
+model SatUsoCfdi {
+  clave        String  @id
+  descripcion  String
+  aplicaFisica Boolean @default(true)
+  aplicaMoral  Boolean @default(true)
+}
+
+model SatFormaPago {
+  clave       String @id
+  descripcion String
+}
+
+model SatMoneda {
+  clave       String @id
+  descripcion String
+  decimales   Int    @default(2)
+}
+
+model SatObjetoImp {
+  clave       String @id
+  descripcion String
+}
+
+// No esta publicado en el mirror usado para los demas catalogos: son 4 claves
+// fijas del manual de cancelacion de CFDI del SAT, sin cambios desde que
+// existen (2018). Se siembran a mano en el script de import, documentado ahi.
+model SatMotivoCancelacion {
+  clave                    String  @id
+  descripcion              String
+  requiereFolioSustitucion Boolean @default(false)
+}
+
+// ---------- Finanzas: Cuentas por Cobrar ----------
+// Lo que el cliente le debe a Monsa una vez emitida la factura. Se crea
+// automaticamente al generar la Factura (factura.service.crearFactura) y
+// hereda los dias de credito del Cliente para calcular fechaVencimiento.
+model CuentaPorCobrar {
+  id               String       @id @default(uuid())
+  facturaId        String       @unique
+  factura          Factura      @relation(fields: [facturaId], references: [id])
+  clienteId        String
+  cliente          Cliente      @relation(fields: [clienteId], references: [id])
+  monto            Decimal      @db.Decimal(14, 2)
+  moneda           String       @default("USD")
+  montoCobrado     Decimal      @default(0) @db.Decimal(14, 2)
+  fechaEmision     DateTime     @default(now())
+  fechaVencimiento DateTime?
+  fechaCobro       DateTime?
+  estatusCobro     EstatusCobro @default(PENDIENTE)
+  comentarios      String?
+
+  @@index([clienteId])
+  @@index([estatusCobro])
+  @@index([fechaVencimiento])
+}

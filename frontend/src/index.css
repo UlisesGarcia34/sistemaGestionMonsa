@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-lienzo text-slate-900 antialiased;
+  }
+
+  /* Numeros siempre en cifras de ancho fijo: las columnas de importes de las
+     tablas y los KPI no deben "bailar" al actualizarse. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Impresion.
+
+   Todos los documentos del sistema (confirmacion de booking, carta de
+   instrucciones, HBL/MBL) se imprimen directamente desde el navegador, sin
+   depender de descargar el PDF: al imprimir se oculta todo el chrome de la
+   aplicacion (sidebar, botones, navegacion) y queda solo el documento.
+
+   El contenedor imprimible se marca con .hoja-documento; cualquier elemento
+   que no deba salir en papel lleva .no-imprimir.
+   --------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  /* El documento sale del flujo de la app y ocupa la hoja completa: si no,
+     hereda el max-width y el padding del layout y se imprime en una columna
+     estrecha en medio de la pagina. */
+  .hoja-documento {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .hoja-documento .bloque-doc {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .hoja-documento .titulo-doc {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* Los fondos de color de la banda de marca y de los badges se imprimen tal
+     cual; sin esto el navegador los descarta y el documento sale plano. */
+  .hoja-documento * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

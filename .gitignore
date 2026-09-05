@@ -1,0 +1,22 @@
+# Dependencias
+node_modules/
+
+# Build
+dist/
+build/
+
+# Variables de entorno (nunca credenciales en el repo)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
