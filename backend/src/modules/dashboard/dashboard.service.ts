@@ -1,3 +1,4 @@
+import { hoyOperativo } from '@/modules/shipments/shipment.politicas';
 import { prisma } from "@/config/prisma";
 
 // Replica los cortes de la hoja REP_AUT.xlsx (por vendedor, por status, por
@@ -34,7 +35,7 @@ export async function resumenPorModalidad() {
 
 export async function resumenPorVendedor() {
   const resultado = await prisma.cotizacion.groupBy({
-    by: ["vendedorId"],
+    by: ["vendedorId", "moneda"],
     _count: { _all: true },
     _sum: { montoVenta: true },
   });
@@ -43,7 +44,8 @@ export async function resumenPorVendedor() {
     select: { id: true, nombre: true },
   });
   return resultado.map(
-    (r: { vendedorId: string; _sum: { montoVenta: unknown } } & ConteoGrupo) => ({
+    (r: { vendedorId: string; moneda: string; _sum: { montoVenta: unknown } } & ConteoGrupo) => ({
+      moneda: r.moneda,
       vendedor: vendedores.find((v: { id: string; nombre: string }) => v.id === r.vendedorId)?.nombre ?? "N/A",
       cotizaciones: r._count._all,
       ventaTotal: r._sum.montoVenta,
@@ -94,12 +96,13 @@ export async function cuentasPorCobrarVencenPronto(diasVentana = 10) {
   });
 }
 
-// Rentabilidad real por embarque: venta y compra vienen de la Cotizacion
-// (capturadas obligatoriamente, gate 1), no como campo opcional al final.
+// Rentabilidad real: solo valorizaciones confirmadas, excluyendo cancelados.
 // Deja ver margenes negativos -- caso real del Excel (folio con perdida).
 export async function rentabilidadPorEmbarque() {
   const shipments = await prisma.shipment.findMany({
+    where: { status: { not: 'CANCELADO' }, valorizacionConfirmada: true, valorizacionVenta: { not: null }, valorizacionCompra: { not: null } },
     select: {
+      valorizacionVenta: true, valorizacionCompra: true,
       folio: true,
       status: true,
       modalidad: true,
@@ -113,8 +116,8 @@ export async function rentabilidadPorEmbarque() {
     orderBy: { creadoEn: "desc" },
   });
   return shipments.map((s) => {
-    const venta = Number(s.booking.cotizacion.montoVenta);
-    const compra = Number(s.booking.cotizacion.montoCompra);
+    const venta = Number(s.valorizacionVenta);
+    const compra = Number(s.valorizacionCompra);
     return {
       folio: s.folio,
       consignee: s.consignee.razonSocial,
@@ -133,15 +136,15 @@ export async function rentabilidadPorEmbarque() {
 // alerta que antes vivia solo como calculo en operaciones; ahora que hay un log
 // de notificaciones se puede saber cuales YA se avisaron.
 export async function avisosArriboPendientes(diasVentana = 10) {
-  const hoy = new Date();
-  const limite = new Date();
-  limite.setDate(limite.getDate() + diasVentana);
+  const hoy = hoyOperativo();
+  const limite = new Date(hoy);
+  limite.setUTCDate(limite.getUTCDate() + diasVentana + 1);
 
   const shipments = await prisma.shipment.findMany({
     where: {
       status: { in: ["NUEVO_EMBARQUE", "BOOKING_CONFIRMED", "PARA_CERRAR", "PARA_FACTURAR"] },
       fechaArriboReal: null,
-      eta: { not: null, lte: limite },
+      eta: { gte: hoy, lt: limite },
     },
     select: {
       id: true,
@@ -187,19 +190,26 @@ export async function kpis() {
     }),
     prisma.shipment.count({ where: { status: "PARA_FACTURAR" } }),
     rentabilidadPorEmbarque(),
-    prisma.cuentaPorPagar.aggregate({
+    prisma.cuentaPorPagar.groupBy({
+      by: ["moneda"],
       _sum: { monto: true },
       where: { fechaPagoConfirmado: null },
     }),
     prisma.cuentaPorCobrar.findMany({
       where: { estatusCobro: { not: "COBRADA" } },
-      select: { monto: true, montoCobrado: true },
+      select: { monto: true, montoCobrado: true, moneda: true },
     }),
   ]);
 
-  const margenTotal = rentabilidad.reduce((acc, r) => acc + r.margen, 0);
-  const embarquesConPerdida = rentabilidad.filter((r) => r.margen < 0).length;
-  const porCobrar = cxcAgg.reduce((acc, c) => acc + (Number(c.monto) - Number(c.montoCobrado)), 0);
+  const monedas = new Set([...rentabilidad.map(r => r.moneda), ...cxpAgg.map(r => r.moneda), ...cxcAgg.map(r => r.moneda)]);
+  const porMoneda = [...monedas].sort().map(moneda => ({
+    moneda,
+    margenTotal: rentabilidad.filter(r => r.moneda === moneda).reduce((a, r) => a + r.margen, 0),
+    porCobrar: cxcAgg.filter(c => c.moneda === moneda).reduce((a, c) => a + Number(c.monto) - Number(c.montoCobrado), 0),
+    porPagar: Number(cxpAgg.find(c => c.moneda === moneda)?._sum.monto ?? 0),
+  }));
+  const unico = porMoneda.length === 1 ? porMoneda[0] : null;
+  const embarquesConPerdida = rentabilidad.filter(r => r.margen < 0).length;
 
   return {
     clientesActivos,
@@ -208,9 +218,11 @@ export async function kpis() {
     bookingsPorConfirmar,
     embarquesEnCurso,
     embarquesPorFacturar,
-    margenTotal,
+    margenTotal: unico?.margenTotal ?? null,
+    moneda: unico?.moneda ?? null,
+    porMoneda,
     embarquesConPerdida,
-    porPagar: Number(cxpAgg._sum.monto ?? 0),
-    porCobrar,
+    porPagar: unico?.porPagar ?? null,
+    porCobrar: unico?.porCobrar ?? null,
   };
 }
