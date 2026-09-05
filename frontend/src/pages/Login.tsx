@@ -56,19 +56,20 @@ export default function Login() {
         aria-hidden
       />
 
-      <div className="relative z-10 grid w-full max-w-5xl items-stretch gap-6 lg:grid-cols-2">
+      {/* Una sola tarjeta unificada: las dos mitades comparten borde y sombra,
+          sin separacion visible entre el panel de marca y el formulario. */}
+      <div className="relative z-10 grid w-full max-w-5xl items-stretch overflow-hidden rounded-3xl shadow-panel lg:grid-cols-2">
         {/* Panel de marca. Se oculta en pantallas chicas para dejar la tarjeta
             del formulario a ancho completo. */}
-        <div className="relative hidden overflow-hidden rounded-3xl bg-navy text-white shadow-panel lg:flex lg:flex-col">
+        <div className="relative hidden bg-navy text-white lg:flex lg:flex-col">
           <img
             src={puertoNavy}
             alt=""
             aria-hidden
-            className="absolute inset-0 h-full w-full object-cover opacity-30"
+            className="absolute inset-0 h-full w-full object-cover opacity-70"
           />
-          <div className="absolute inset-0 bg-navy-900/75" aria-hidden />
           <div
-            className="absolute inset-0 bg-gradient-to-t from-navy-900 via-navy-900/35 to-navy-900/70"
+            className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/60 to-navy-900/35"
             aria-hidden
           />
 
@@ -106,7 +107,7 @@ export default function Login() {
         </div>
 
         {/* Tarjeta del formulario. */}
-        <div className="mx-auto flex w-full max-w-md flex-col rounded-3xl border border-slate-200/70 bg-white p-8 shadow-panel sm:p-10 lg:max-w-none dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex w-full max-w-md flex-col bg-white p-8 sm:p-10 lg:max-w-none lg:border-l lg:border-slate-200/70 dark:bg-slate-900 dark:lg:border-slate-800">
           <div>
             <img
               src={logoMonsa}
@@ -208,6 +209,10 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      <p className="relative z-10 mt-6 text-center text-xs text-slate-400 dark:text-slate-600">
+        © {new Date().getFullYear()} Monsa Global Cargo. Sistema interno de gestion.
+      </p>
     </div>
   );
 }
