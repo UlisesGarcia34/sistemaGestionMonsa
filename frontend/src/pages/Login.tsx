@@ -49,10 +49,10 @@ export default function Login() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#F4F6FB] px-4 py-10">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-[#F4F6FB] px-4 py-10 dark:bg-slate-950">
       {/* Fondo de puntos: la textura discreta del patron de referencia. */}
       <div
-        className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,rgba(11,61,92,0.10)_1px,transparent_1px)] [background-size:22px_22px]"
+        className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,rgba(11,61,92,0.10)_1px,transparent_1px)] [background-size:22px_22px] dark:[background-image:radial-gradient(circle,rgba(148,163,184,0.08)_1px,transparent_1px)]"
         aria-hidden
       />
 
@@ -106,20 +106,27 @@ export default function Login() {
         </div>
 
         {/* Tarjeta del formulario. */}
-        <div className="mx-auto flex w-full max-w-md flex-col justify-center rounded-3xl border border-slate-200/70 bg-white p-8 shadow-panel sm:p-10 lg:max-w-none">
-          <img
-            src={logoMonsa}
-            alt="Monsa Global Cargo"
-            className="h-16 w-auto self-start object-contain"
-          />
+        <div className="mx-auto flex w-full max-w-md flex-col rounded-3xl border border-slate-200/70 bg-white p-8 shadow-panel sm:p-10 lg:max-w-none dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <img
+              src={logoMonsa}
+              alt="Monsa Global Cargo"
+              className="h-16 w-auto self-start object-contain"
+            />
+            <span className="mt-7 block h-1 w-12 rounded-full bg-teal-500" aria-hidden />
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-800 dark:text-white">
+              Bienvenidos
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+              Ingresa con tu cuenta de Monsa Global Cargo para continuar.
+            </p>
+          </div>
 
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-navy-800">Bienvenidos</h2>
-
-          <form onSubmit={enviar} className="mt-7 space-y-4">
+          <form onSubmit={enviar} className="mt-8 space-y-4">
             {error && (
               <p
                 role="alert"
-                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs leading-relaxed text-rose-700"
+                className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-xs leading-relaxed text-rose-700 dark:border-rose-900 dark:bg-rose-900/20 dark:text-rose-300"
               >
                 <CircleAlert size={14} strokeWidth={2} className="mt-px shrink-0" aria-hidden />
                 {error}
@@ -190,9 +197,15 @@ export default function Login() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-slate-400">
-            Si no tienes acceso, pidele a administracion que te de de alta.
-          </p>
+          <div className="mt-auto pt-10">
+            <p className="text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+              Si no tienes acceso, pidele a administracion que te de de alta.
+            </p>
+            <p className="mt-4 flex items-center justify-center gap-2 border-t border-slate-100 pt-4 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+              <ShieldCheck size={13} strokeWidth={2} aria-hidden />
+              Conexion segura · uso interno de Monsa Global Cargo
+            </p>
+          </div>
         </div>
       </div>
     </div>
