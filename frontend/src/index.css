@@ -3,6 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  html,
+  body,
+  #root {
+    font-family: "Outfit", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
   body {
     @apply bg-lienzo text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100;
   }
