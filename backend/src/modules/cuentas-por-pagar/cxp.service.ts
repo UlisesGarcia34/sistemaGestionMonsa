@@ -1,3 +1,4 @@
+import { transaccion } from '@/shared/transaccion';
 import { prisma } from "@/config/prisma";
 import { ReglaDeNegocioError } from "@/shared/middleware/errorHandler";
 import { limpiarEntrada } from "@/shared/limpiarEntrada";
@@ -7,18 +8,20 @@ import { ActualizarCxpInput, CrearCxpInput, RegistrarPagoInput } from "./cxp.sch
 // opcional (hay pagos que no cuelgan de un embarque puntual, ej. garantias
 // de contenedor globales) pero si se manda, tambien se valida.
 export async function crearCuentaPorPagar(data: CrearCxpInput) {
-  const proveedor = await prisma.proveedor.findUnique({ where: { id: data.proveedorId } });
+  return transaccion(async tx => {
+  const proveedor = await tx.proveedor.findUnique({ where: { id: data.proveedorId } });
   if (!proveedor) {
     throw new ReglaDeNegocioError("Proveedor no encontrado", 404);
   }
   if (data.shipmentId) {
-    const shipment = await prisma.shipment.findUnique({ where: { id: data.shipmentId } });
+    const shipment = await tx.shipment.findUnique({ where: { id: data.shipmentId } });
     if (!shipment) {
       throw new ReglaDeNegocioError("Embarque no encontrado", 404);
     }
+    if (shipment.status === "CANCELADO") throw new ReglaDeNegocioError("No se pueden asignar cuentas por pagar a un embarque CANCELADO");
   }
 
-  return prisma.cuentaPorPagar.create({
+  return tx.cuentaPorPagar.create({
     data: {
       proveedorId: data.proveedorId,
       shipmentId: data.shipmentId,
@@ -31,13 +34,15 @@ export async function crearCuentaPorPagar(data: CrearCxpInput) {
       comentarios: data.comentarios,
     },
   });
+  });
 }
 
 // Una cuenta ya pagada no se edita: el monto y la fecha limite son lo que
 // justifico la salida de dinero. Corregir un pago ya confirmado es una
 // operacion de tesoreria distinta, no una edicion de captura.
 export async function actualizarCuentaPorPagar(id: string, data: ActualizarCxpInput) {
-  const cuenta = await prisma.cuentaPorPagar.findUnique({ where: { id } });
+  return transaccion(async tx => {
+  const cuenta = await tx.cuentaPorPagar.findUnique({ where: { id } });
   if (!cuenta) {
     throw new ReglaDeNegocioError("Cuenta por pagar no encontrada", 404);
   }
@@ -49,15 +54,17 @@ export async function actualizarCuentaPorPagar(id: string, data: ActualizarCxpIn
 
   const limpio = limpiarEntrada(data);
   if (limpio.proveedorId) {
-    const proveedor = await prisma.proveedor.findUnique({ where: { id: limpio.proveedorId } });
+    const proveedor = await tx.proveedor.findUnique({ where: { id: limpio.proveedorId } });
     if (!proveedor) throw new ReglaDeNegocioError("Proveedor no encontrado", 404);
   }
   if (limpio.shipmentId) {
-    const shipment = await prisma.shipment.findUnique({ where: { id: limpio.shipmentId } });
+    const shipment = await tx.shipment.findUnique({ where: { id: limpio.shipmentId } });
     if (!shipment) throw new ReglaDeNegocioError("Embarque no encontrado", 404);
+    if (shipment.status === "CANCELADO") throw new ReglaDeNegocioError("No se pueden asignar cuentas por pagar a un embarque CANCELADO");
   }
 
-  return prisma.cuentaPorPagar.update({ where: { id }, data: limpio as never });
+  return tx.cuentaPorPagar.update({ where: { id }, data: limpio as never });
+  });
 }
 
 export async function registrarPago(id: string, data: RegistrarPagoInput) {
