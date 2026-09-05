@@ -327,6 +327,11 @@ model Booking {
 // ---------- Nucleo operativo: Shipment ----------
 
 model Shipment {
+  version Int @default(0)
+  motivoCancelacion String? @db.Text
+  canceladoEn DateTime?
+  canceladoPorId String?
+  auditoria AuditoriaShipment[]
   id        String  @id @default(uuid())
   folio     String  @unique // ej. MGC26000001
   bookingId String  @unique
@@ -390,6 +395,26 @@ model Shipment {
   @@index([status])
   @@index([modalidad])
   @@index([eta])
+  @@index([status, eta])
+  @@index([tipoOperacion, modalidad, creadoEn])
+}
+
+model ConsecutivoShipment {
+  serie String @id
+  ultimo Int
+}
+
+model AuditoriaShipment {
+  id String @id @default(uuid())
+  shipmentId String
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  accion String
+  autorId String?
+  antes Json?
+  despues Json
+  creadoEn DateTime @default(now())
+
+  @@index([shipmentId, creadoEn])
 }
 
 // ---------- Log de notificaciones al cliente ----------
