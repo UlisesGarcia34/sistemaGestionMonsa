@@ -1,8 +1,13 @@
 import { Router } from "express";
+import { filtrosShipmentSchema } from '@/modules/shipments/shipment.schema';
+import { resumenEmbarques } from './embarque-kpi.service';
 import { asyncHandler } from "@/shared/middleware/errorHandler";
 import * as dashboardService from "./dashboard.service";
 
 export const dashboardRouter = Router();
+dashboardRouter.get('/embarques', asyncHandler(async (req, res) => {
+  res.json(await resumenEmbarques(filtrosShipmentSchema.parse(req.query)));
+}));
 
 dashboardRouter.get(
   "/kpis",
