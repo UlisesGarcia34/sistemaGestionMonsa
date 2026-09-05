@@ -60,6 +60,8 @@ interface FilaOperacion {
   id: string;
   folio: string;
   status: string;
+  version: number;
+  acciones: { editar: string | null };
   tipoOperacion: string;
   modalidad: string;
   estatusMaterial?: string | null;
@@ -166,7 +168,7 @@ export default function Operaciones() {
 
   const guardar = useMutation({
     mutationFn: async (payload: Record<string, unknown>) =>
-      api.patch(`/shipments/${editar!.id}/tracking`, payload),
+      api.patch(`/shipments/${editar!.id}/tracking`, { ...payload, version: editar!.version }),
     onSuccess: () => {
       setEditar(null);
       setErrorEdicion(null);
@@ -345,6 +347,7 @@ export default function Operaciones() {
         accionesExtra={[
           {
             clave: "tracking",
+            deshabilitada: s => s.acciones.editar,
             label: "Actualizar tracking",
             icono: RefreshCw,
             tono: "acento",
