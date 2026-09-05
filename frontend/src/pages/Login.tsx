@@ -22,11 +22,14 @@ const FLUJO = [
   "Facturacion, cobranza y pagos a proveedores",
 ];
 
+const CLAVE_CORREO_RECORDADO = "mgc.correoRecordado";
+
 export default function Login() {
   const { usuario, cargando, iniciarSesion } = useAuth();
   const location = useLocation();
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => localStorage.getItem(CLAVE_CORREO_RECORDADO) ?? "");
   const [password, setPassword] = useState("");
+  const [recordar, setRecordar] = useState(() => !!localStorage.getItem(CLAVE_CORREO_RECORDADO));
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [verPassword, setVerPassword] = useState(false);
@@ -39,6 +42,8 @@ export default function Login() {
     e.preventDefault();
     setError(null);
     setEnviando(true);
+    if (recordar) localStorage.setItem(CLAVE_CORREO_RECORDADO, email);
+    else localStorage.removeItem(CLAVE_CORREO_RECORDADO);
     try {
       await iniciarSesion(email, password);
     } catch (err) {
@@ -49,17 +54,16 @@ export default function Login() {
   }
 
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[#F4F6FB] p-3 sm:p-5 dark:bg-slate-950">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-[#F4F6FB] p-4 sm:p-8 dark:bg-slate-950">
       {/* Fondo de puntos: la textura discreta del patron de referencia. */}
       <div
         className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle,rgba(11,61,92,0.10)_1px,transparent_1px)] [background-size:22px_22px] dark:[background-image:radial-gradient(circle,rgba(148,163,184,0.08)_1px,transparent_1px)]"
         aria-hidden
       />
 
-      {/* Una sola tarjeta unificada, a pantalla completa: las dos mitades
-          comparten borde y sombra, sin separacion visible entre el panel de
-          marca y el formulario. */}
-      <div className="relative z-10 grid min-h-0 flex-1 items-stretch overflow-hidden rounded-3xl shadow-panel lg:grid-cols-2">
+      {/* Una sola tarjeta unificada: las dos mitades comparten borde y sombra,
+          sin separacion visible entre el panel de marca y el formulario. */}
+      <div className="relative z-10 grid w-full max-w-[1500px] items-stretch overflow-hidden rounded-3xl shadow-panel lg:min-h-[640px] lg:grid-cols-2">
         {/* Panel de marca. Se oculta en pantallas chicas para dejar la tarjeta
             del formulario a ancho completo. */}
         <div className="relative hidden bg-navy text-white lg:flex lg:flex-col">
@@ -101,29 +105,27 @@ export default function Login() {
               ))}
             </ol>
 
-            <p className="mt-auto flex items-center gap-2 pt-8 text-xs text-white/55">
-              <ShieldCheck size={14} strokeWidth={2} aria-hidden />
-              Acceso restringido al personal de Monsa Global Cargo.
-            </p>
+            {/* Tarjeta flotante sobre la foto, eco del panel de marca. */}
+            <div className="mt-auto flex items-center gap-2.5 self-start rounded-2xl border border-white/10 bg-navy-950/60 px-4 py-3 shadow-lg backdrop-blur-sm">
+              <ShieldCheck size={16} strokeWidth={2} className="shrink-0 text-teal-300" aria-hidden />
+              <span className="text-xs leading-relaxed text-white/85">
+                Acceso restringido al personal de Monsa Global Cargo.
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Tarjeta del formulario. */}
         <div className="mx-auto flex w-full max-w-md flex-col bg-white p-8 sm:p-10 lg:max-w-none lg:border-l lg:border-slate-200/70 dark:bg-slate-900 dark:lg:border-slate-800">
-          <div>
-            <img
-              src={logoMonsa}
-              alt="Monsa Global Cargo"
-              className="h-16 w-auto self-start object-contain"
-            />
-            <span className="mt-7 block h-1 w-12 rounded-full bg-teal-500" aria-hidden />
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-800 dark:text-white">
-              Bienvenidos
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-              Ingresa con tu cuenta de Monsa Global Cargo para continuar.
-            </p>
-          </div>
+          <img src={logoMonsa} alt="Monsa Global Cargo" className="h-16 w-auto self-start object-contain" />
+
+          <span className="mt-7 block h-1 w-12 rounded-full bg-teal-500" aria-hidden />
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy-800 dark:text-white">
+            Bienvenidos
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            Ingresa con tu cuenta de Monsa Global Cargo para continuar.
+          </p>
 
           <form onSubmit={enviar} className="mt-8 space-y-4">
             {error && (
@@ -190,6 +192,16 @@ export default function Login() {
               </div>
             </Field>
 
+            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+              <input
+                type="checkbox"
+                checked={recordar}
+                onChange={(e) => setRecordar(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500/30 dark:border-slate-600 dark:bg-slate-800"
+              />
+              Recordarme
+            </label>
+
             <Button
               type="submit"
               icono={LogIn}
@@ -201,19 +213,16 @@ export default function Login() {
           </form>
 
           <div className="mt-auto pt-10">
-            <p className="text-center text-xs leading-relaxed text-slate-400 dark:text-slate-500">
+            <p className="border-t border-slate-100 pt-4 text-center text-xs leading-relaxed text-slate-400 dark:border-slate-800 dark:text-slate-500">
               Si no tienes acceso, pidele a administracion que te de de alta.
-            </p>
-            <p className="mt-4 flex items-center justify-center gap-2 border-t border-slate-100 pt-4 text-[11px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
-              <ShieldCheck size={13} strokeWidth={2} aria-hidden />
-              Conexion segura · uso interno de Monsa Global Cargo
             </p>
           </div>
         </div>
       </div>
 
-      <p className="relative z-10 shrink-0 pt-2.5 text-center text-xs text-slate-400 dark:text-slate-600">
-        © {new Date().getFullYear()} Monsa Global Cargo. Sistema interno de gestion.
+      <p className="relative z-10 mt-4 flex shrink-0 items-center gap-1.5 text-center text-xs text-slate-400 dark:text-slate-600">
+        <ShieldCheck size={13} strokeWidth={2} aria-hidden />© {new Date().getFullYear()} Monsa
+        Global Cargo. Sistema interno de gestion.
       </p>
     </div>
   );
